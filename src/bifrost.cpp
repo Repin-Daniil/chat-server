@@ -32,7 +32,7 @@ void ResetMetric(Stats& stats) {
 
 Bifrost::Bifrost(const components::ComponentConfig& config, const components::ComponentContext& context)
     : TcpAcceptorBase(config, context),
-      stats_(context.FindComponent<components::StatisticsStorage>().GetMetricsStorage()->GetMetric(kTcpEchoTag)), queue_1_(Queue::Create()), queue_2_(Queue::Create()){
+      stats_(context.FindComponent<components::StatisticsStorage>().GetMetricsStorage()->GetMetric(kTcpEchoTag)) {
 }
 
 
@@ -81,11 +81,16 @@ void Bifrost::ProcessSocket(engine::io::Socket&& sock) {
     utils::FastScopeGuard guard{[this]() noexcept {
         LOG_INFO() << "Closing socket";
         ++stats_.closed_sockets;
+      --stats_.opened_sockets; //todo delete!
     }};
 
     if (mutex_.try_lock()) {
+      queue_1_ = Queue::Create();
+      queue_2_ = Queue::Create();
+
       auto send_task = utils::Async("send", DoSend, std::ref(sock), queue_2_->GetConsumer());
       DoRecv(sock, queue_1_->GetProducer(), stats_);
+      mutex_.unlock();
     } else {
       auto send_task = utils::Async("send", DoSend, std::ref(sock), queue_1_->GetConsumer());
       DoRecv(sock, queue_2_->GetProducer(), stats_);
