@@ -1,3 +1,4 @@
+#pragma once
 #include <userver/utest/using_namespace_userver.hpp>
 
 #include <userver/clients/dns/component.hpp>
@@ -16,17 +17,29 @@
 #include <userver/server/handlers/tests_control.hpp>
 #include <userver/testsuite/testsuite_support.hpp>
 
-#include "bifrost.h"
+namespace bifrost {
 
-int main(int argc, const char* const argv[]) {
-    const auto component_list = components::MinimalServerComponentList()
-                                    .Append<server::handlers::ServerMonitor>()
-                                    .Append<bifrost::Bifrost>()
-                                    // Testuite components:
-                                    .Append<server::handlers::TestsControl>()
-                                    .Append<components::TestsuiteSupport>()
-                                    .Append<clients::dns::Component>()
-                                    .Append<components::HttpClient>();
+using namespace userver;
+struct Stats;
 
-    return utils::DaemonMain(argc, argv, component_list);
-}
+using Queue = concurrent::SpscQueue<std::string>;
+
+class Bifrost final : public components::TcpAcceptorBase {
+public:
+    static constexpr std::string_view kName = "tcp-echo";
+
+    Bifrost(const components::ComponentConfig& config, const components::ComponentContext& context);
+
+    void ProcessSocket(engine::io::Socket&& sock) override;
+
+private:
+    Stats& stats_;
+    engine::Mutex mutex_;
+
+    std::shared_ptr<Queue> queue_1_;
+    std::shared_ptr<Queue> queue_2_;
+
+  //OPTIONAL Add Queue in construct MPMC for binding
+};
+
+}  // namespace samples::tcp::echo

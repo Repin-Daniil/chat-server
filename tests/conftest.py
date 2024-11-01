@@ -1,32 +1,23 @@
-import pathlib
-
+# /// [service_non_http_health_checker]
 import pytest
+from pytest_userver.utils import net
 
-from testsuite.databases.pgsql import discover
-
-
-pytest_plugins = ['pytest_userver.plugins.postgresql']
+pytest_plugins = ['pytest_userver.plugins.core']
 
 
-@pytest.fixture(scope='session')
-def service_source_dir():
-    """Path to root directory service."""
-    return pathlib.Path(__file__).parent.parent
-
-
-@pytest.fixture(scope='session')
-def initial_data_path(service_source_dir):
-    """Path for find files with data"""
-    return [
-        service_source_dir / 'postgresql/data',
-    ]
+@pytest.fixture(name='tcp_service_port', scope='session')
+def _tcp_service_port(service_config) -> int:
+    components = service_config['components_manager']['components']
+    tcp_hello = components.get('tcp-echo')
+    assert tcp_hello, 'No "tcp-echo" component found'
+    return int(tcp_hello['port'])
 
 
 @pytest.fixture(scope='session')
-def pgsql_local(service_source_dir, pgsql_local_create):
-    """Create schemas databases for tests"""
-    databases = discover.find_schemas(
-        'pg_service_template',  # service name that goes to the DB connection
-        [service_source_dir.joinpath('postgresql/schemas')],
-    )
-    return pgsql_local_create(list(databases.values()))
+def service_non_http_health_checks(
+    service_config, tcp_service_port,
+) -> net.HealthChecks:
+    checks = net.get_health_checks_info(service_config)
+    checks.tcp.append(net.HostPort(host='localhost', port=tcp_service_port))
+    return checks
+    # /// [service_non_http_health_checker]

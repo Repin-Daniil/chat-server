@@ -1,67 +1,56 @@
+# yaml
 components_manager:
     task_processors:                  # Task processor is an executor for coroutine tasks
 
-        main-task-processor:          # Make a task processor for CPU-bound couroutine tasks.
-            worker_threads: $worker-threads         # Process tasks in 4 threads.
+        main-task-processor:          # Make a task processor for CPU-bound coroutine tasks.
+            worker_threads: 4         # Process tasks in 4 threads.
 
         fs-task-processor:            # Make a separate task processor for filesystem bound tasks.
-            worker_threads: $worker-fs-threads
+            worker_threads: 4
 
-    default_task_processor: main-task-processor
+        monitor-task-processor:       # Make a separate task processor for administrative tasks.
+            worker_threads: 2
+            thread_name: mon-worker
+
+    default_task_processor: main-task-processor  # Task processor in which components start.
 
     components:                       # Configuring components that were registered via component_list
-        server:
-            listener:                 # configuring the main listening socket...
-                port: $server-port            # ...to listen on this port and...
-                task_processor: main-task-processor    # ...process incoming requests on this task processor.
         logging:
             fs-task-processor: fs-task-processor
             loggers:
                 default:
                     file_path: '@stderr'
-                    level: $logger-level
+                    level: debug
                     overflow_behavior: discard  # Drop logs if the system is too busy to write them down.
 
-        # Dynamic config options. Cache is disabled, updates are disabled.
-        dynamic-config:
-            # For most of userver dynamic configs, defaults are used, some are overridden here.
-            # See userver "dynamic config" docs for what configs exist.
-            defaults:
-                HTTP_CLIENT_CONNECTION_POOL_SIZE: 1000
-                POSTGRES_DEFAULT_COMMAND_CONTROL:
-                    network_timeout_ms: 750
-                    statement_timeout_ms: 500
+        # /// [TCP component]
+        # yaml
+        tcp-echo:
+            task_processor: main-task-processor         # Run socket accepts on CPU bound task processor
+            sockets_task_processor: main-task-processor # Run ProcessSocket() for each new socket on CPU bound task processor
+            port: 8080
+        # /// [TCP component]
 
-        testsuite-support: {}
+        # /// [HTTP and stats]
+        # yaml
+        server:
+            listener:
+                port: 8182            # ...to listen on this port and...
+                task_processor: monitor-task-processor    # ...process incoming requests on this task processor.
+        handler-server-monitor:
+            path: /service/monitor
+            method: GET
+            task_processor: monitor-task-processor
+            monitor-handler: false
+        # /// [HTTP and stats]
 
-        http-client:
-            load-enabled: $is-testing
-            fs-task-processor: fs-task-processor
-
+        # Testuite stuff
+        testsuite-support:
         tests-control:
-            load-enabled: $is-testing
             path: /tests/{action}
             method: POST
             task_processor: main-task-processor
-        handler-ping:
-            path: /ping
-            method: GET
-            task_processor: main-task-processor
-            throttling_enabled: false
-            url_trailing_slash: strict-match
-
-        handler-hello:                    # Finally! Our handler.
-            path: /v1/hello               # Registering handler by URL '/v1/hello'.
-            method: POST                  # It will only reply to POST requests.
-            task_processor: main-task-processor  # Run it on CPU bound task processor
-
-        postgres-db-1:
-            dbconnection: $dbconnection
-            dbconnection#env: DB_CONNECTION
-            blocking_task_processor: fs-task-processor
-            dns_resolver: async
-            sync-start: false
-            connlimit_mode: manual
-
-        dns-client:
+        http-client:
+            fs-task-processor: fs-task-processor
+        dns-client:                     # Asynchronous DNS component
             fs-task-processor: fs-task-processor
