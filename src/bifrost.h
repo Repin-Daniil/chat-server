@@ -16,6 +16,7 @@
 #include <userver/clients/http/component.hpp>
 #include <userver/server/handlers/tests_control.hpp>
 #include <userver/testsuite/testsuite_support.hpp>
+#include <utility>
 
 namespace bifrost {
 
@@ -27,9 +28,6 @@ using Queue = concurrent::SpscQueue<std::string>;
 struct Dialog {
   std::shared_ptr<Queue> queue_1_;
   std::shared_ptr<Queue> queue_2_;
-
-  Dialog() : queue_1_(Queue::Create()), queue_2_(Queue::Create()) {
-  }
 };
 
 class Bifrost final : public components::TcpAcceptorBase {
@@ -43,7 +41,7 @@ public:
 private:
     Stats& stats_;
     engine::Mutex mutex_;
-    std::vector<Dialog> dialogs_;
+    Dialog dialog_;
 };
 
 }  // namespace samples::tcp::echo
