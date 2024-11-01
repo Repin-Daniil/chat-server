@@ -88,6 +88,11 @@ void Bifrost::ProcessSocket(engine::io::Socket&& sock) {
       queue_1_ = Queue::Create();
       queue_2_ = Queue::Create();
 
+      if (!queue_1_->GetProducer().Push("AWAIT\r\n\r\n") ||
+      !queue_2_->GetProducer().Push("SEND\r\n\r\n")) {
+        return;
+      }
+
       auto send_task = utils::Async("send", DoSend, std::ref(sock), queue_2_->GetConsumer());
       DoRecv(sock, queue_1_->GetProducer(), stats_);
       mutex_.unlock();
