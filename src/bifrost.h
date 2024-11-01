@@ -30,11 +30,6 @@ struct Dialog {
 
   Dialog() : queue_1_(Queue::Create()), queue_2_(Queue::Create()) {
   }
-
-  ~Dialog() {
-    queue_1_.reset();
-    queue_2_.reset();
-  }
 };
 
 class Bifrost final : public components::TcpAcceptorBase {

@@ -75,14 +75,18 @@ void Bifrost::ProcessSocket(engine::io::Socket&& sock) {
   std::shared_ptr<Queue> output;
   std::shared_ptr<Queue> input;
 
+  std::size_t index;
+
   mutex_.lock();
 
   LOG_INFO() << "Start socket binding" << stats_.opened_sockets;
+	bool flag = false;
 
   if (stats_.opened_sockets % 2 == 0) {
     dialogs_.emplace_back();
     output = dialogs_[dialogs_.size() - 1].queue_1_;
     input = dialogs_[dialogs_.size() - 1].queue_2_;
+  	flag = true;
   } else {
     output = dialogs_[dialogs_.size() - 1].queue_2_;
     input = dialogs_[dialogs_.size() - 1].queue_1_;
@@ -100,14 +104,15 @@ void Bifrost::ProcessSocket(engine::io::Socket&& sock) {
     ++stats_.closed_sockets;
   }};
 
+  auto producer = output->GetProducer();
+
+   if(flag && !producer.Push("SEND\r\n\r\n")){
+       return;
+  }
+
   auto send_task = utils::Async("send", DoSend, std::ref(sock), input->GetConsumer());
-  DoRecv(sock, output->GetProducer(), stats_);
-
-      // if(!producer.Push("SEND\r\n\r\n")){
-      //   return;
-      // }
+  DoRecv(sock, std::move(producer), stats_);
 }
-
 
 }
 
