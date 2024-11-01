@@ -26,8 +26,8 @@ struct Stats;
 using Queue = concurrent::SpscQueue<std::string>;
 
 struct Dialog {
-  std::shared_ptr<Queue> queue_1_;
-  std::shared_ptr<Queue> queue_2_;
+  std::shared_ptr<Queue> queue_1;
+  std::shared_ptr<Queue> queue_2;
 };
 
 class Bifrost final : public components::TcpAcceptorBase {

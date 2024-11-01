@@ -70,23 +70,23 @@ Bifrost::Bifrost(const components::ComponentConfig& config, const components::Co
 void Bifrost::ProcessSocket(engine::io::Socket&& sock) {
   LOG_INFO() << "New socket: " << stats_.opened_sockets + 1;
 
-  std::shared_ptr<Queue> output;
-  std::shared_ptr<Queue> input;
+  std::shared_ptr<Queue> from_queue;
+  std::shared_ptr<Queue> to_queue;
 
   mutex_.lock();
 
   if (stats_.opened_sockets % 2 == 0) {
-    input = Queue::Create();
-    output = Queue::Create();
+    dialog_.queue_1 = Queue::Create();
+    dialog_.queue_2 = Queue::Create();
 
-    dialog_.queue_1_ = input;
-    dialog_.queue_2_ = output;
+    to_queue = dialog_.queue_1;
+    from_queue = dialog_.queue_2;
   } else {
-    output = dialog_.queue_1_;
-    input =  dialog_.queue_2_;
+    to_queue =  dialog_.queue_2;
+    from_queue = dialog_.queue_1;
 
-    dialog_.queue_1_.reset();
-    dialog_.queue_2_.reset();
+    dialog_.queue_1.reset();
+    dialog_.queue_2.reset();
 
     LOG_INFO() << "New dialog: " << ++stats_.dialogs_opened;
   }
@@ -104,8 +104,9 @@ void Bifrost::ProcessSocket(engine::io::Socket&& sock) {
   tracing::Span span{fmt::format("sock_{}", sock_num)};
   span.AddTag("fd", std::to_string(sock.Fd()));
 
-  auto send_task = utils::Async("send", DoSend, std::ref(sock), input->GetConsumer());
-  DoRecv(sock, output->GetProducer(), stats_);
+  auto send_task = utils::Async("send", DoSend, std::ref(sock), to_queue->GetConsumer());
+  to_queue.reset();
+  DoRecv(sock, from_queue->GetProducer(), stats_);
 }
 
 }
