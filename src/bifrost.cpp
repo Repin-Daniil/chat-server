@@ -75,22 +75,19 @@ void Bifrost::ProcessSocket(engine::io::Socket&& sock) {
 
   mutex_.lock();
 
-  bool flag = false;
-
   if (stats_.opened_sockets % 2 == 0) {
     input = Queue::Create();
     output = Queue::Create();
 
     dialog_.queue_1_ = input;
     dialog_.queue_2_ = output;
-
-    flag = true;
   } else {
     output = dialog_.queue_1_;
     input =  dialog_.queue_2_;
 
     dialog_.queue_1_.reset();
     dialog_.queue_2_.reset();
+
     LOG_INFO() << "New dialog: " << ++stats_.dialogs_opened;
   }
 
@@ -107,14 +104,8 @@ void Bifrost::ProcessSocket(engine::io::Socket&& sock) {
   tracing::Span span{fmt::format("sock_{}", sock_num)};
   span.AddTag("fd", std::to_string(sock.Fd()));
 
-  auto producer = output->GetProducer();
-
-  if(flag && !producer.Push("SEND\r\n\r\n")){
-       return;
-  }
-
   auto send_task = utils::Async("send", DoSend, std::ref(sock), input->GetConsumer());
-  DoRecv(sock, std::move(producer), stats_);
+  DoRecv(sock, output->GetProducer(), stats_);
 }
 
 }
