@@ -16,6 +16,8 @@ struct Stats {
     std::atomic<std::uint64_t> bytes_read{0};
 };
 
+
+
 const utils::statistics::MetricTag<Stats> kTcpEchoTag{"tcp-echo"};
 
 void DumpMetric(utils::statistics::Writer& writer, const Stats& stats) {
@@ -33,7 +35,6 @@ void ResetMetric(Stats& stats) {
 Bifrost::Bifrost(const components::ComponentConfig& config, const components::ComponentContext& context)
     : TcpAcceptorBase(config, context),
       stats_(context.FindComponent<components::StatisticsStorage>().GetMetricsStorage()->GetMetric(kTcpEchoTag)) {
-
 }
 
 
@@ -71,43 +72,42 @@ void DoRecv(engine::io::Socket& sock, Queue::Producer producer, Stats& stats) {
 }  // anonymous namespace
 
 void Bifrost::ProcessSocket(engine::io::Socket&& sock) {
-  if (stats_.opened_sockets == 2) {
-    return;
+  std::shared_ptr<Queue> output;
+  std::shared_ptr<Queue> input;
+
+  mutex_.lock();
+
+  LOG_INFO() << "Start socket binding" << stats_.opened_sockets;
+
+  if (stats_.opened_sockets % 2 == 0) {
+    dialogs_.emplace_back();
+    output = dialogs_[dialogs_.size() - 1].queue_1_;
+    input = dialogs_[dialogs_.size() - 1].queue_2_;
+  } else {
+    output = dialogs_[dialogs_.size() - 1].queue_2_;
+    input = dialogs_[dialogs_.size() - 1].queue_1_;
   }
-    const auto sock_num = ++stats_.opened_sockets;
 
-    tracing::Span span{fmt::format("sock_{}", sock_num)};
-    span.AddTag("fd", std::to_string(sock.Fd()));
+  const auto sock_num = ++stats_.opened_sockets;
 
-    utils::FastScopeGuard guard{[this]() noexcept {
-        LOG_INFO() << "Closing socket";
-        ++stats_.closed_sockets;
-      --stats_.opened_sockets; //todo delete!
-    }};
+  mutex_.unlock();
 
-    if (mutex_.try_lock()) {
-	  queue_1_ = Queue::Create();
-      queue_2_ = Queue::Create();
+  tracing::Span span{fmt::format("sock_{}", sock_num)};
+  span.AddTag("fd", std::to_string(sock.Fd()));
 
-      auto send_task = utils::Async("send", DoSend, std::ref(sock), queue_2_->GetConsumer());
-      DoRecv(sock, queue_1_->GetProducer(), stats_);
+  utils::FastScopeGuard guard{[this]() noexcept {
+    LOG_INFO() << "Closing socket " << stats_.opened_sockets;
+    ++stats_.closed_sockets;
+  }};
 
-//      queue_1_.reset();
-//      queue_2_.reset();
+  auto send_task = utils::Async("send", DoSend, std::ref(sock), input->GetConsumer());
+  DoRecv(sock, output->GetProducer(), stats_);
 
-      mutex_.unlock();
-    } else {
-	  auto producer = queue_2_->GetProducer();
-
-      if(!producer.Push("SEND\r\n\r\n")){
-        return;
-      }
-
-      auto send_task = utils::Async("send", DoSend, std::ref(sock), queue_1_->GetConsumer());
-      DoRecv(sock, std::move(producer), stats_);
-    }
+      // if(!producer.Push("SEND\r\n\r\n")){
+      //   return;
+      // }
+}
 
 
 }
 
-}  // namespace samples::tcp::echo
