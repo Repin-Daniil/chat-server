@@ -10,7 +10,7 @@ struct Stats {
 namespace {
 std::pair<std::string, std::string> ParseAuthData(std::string message) {
     auto at = message.find('@');
-    const std::size_t deilimiter_size = 8;
+    const std::size_t deilimiter_size = 4;
 
     if (at == std::string::npos || at == 0 || at >= message.length() - deilimiter_size) {
         return {};
@@ -24,7 +24,7 @@ std::pair<std::string, std::string> ParseAuthData(std::string message) {
 
 std::pair<std::string, std::string> ParseMessage(std::string text) {
     auto at = text.find('@');
-    const std::size_t deilimiter_size = 8;
+    const std::size_t deilimiter_size = 4;
 
     if (at == std::string::npos || at == 0 || at >= text.length() - deilimiter_size) {
         return {};
