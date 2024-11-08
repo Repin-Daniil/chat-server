@@ -1,42 +1,43 @@
 version: "2.3"
 
 services:
-    postgres:
-        container_name: service-postgres
-        image: postgres:12
-        environment: &db_env
-          POSTGRES_DB: chat_server_db_1
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-        ports:
-          - 5432
-        volumes:
-          - ./postgresql/schemas:/docker-entrypoint-initdb.d
-          - ./.pgdata:/var/lib/postgresql/data
-        networks:
-          - postgres
+  postgres:
+    container_name: service-postgres
+    image: postgres:12
+    environment: &db_env
+      POSTGRES_DB: bifrost_db_1
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - 5432
+    volumes:
+      - ./postgresql/schemas:/docker-entrypoint-initdb.d
+      - ./.pgdata:/var/lib/postgresql/data
+    networks:
+      - postgres
 
-    chat_server-container:
-        image: ghcr.io/userver-framework/ubuntu-22.04-userver-pg:latest
-        privileged: true
-        environment:
-          <<: *db_env
-          PREFIX: ${PREFIX:-~/.local}
-          CCACHE_DIR: /chat_server/.ccache
-          CORES_DIR: /cores
-        volumes:
-          - .:/chat_server:rw
-          - ${TC_CORES_DIR:-./.cores}:/cores:rw
-        ports:
-          - 8080:8080
-        working_dir: /chat_server
-        entrypoint:
-          - ./tests/run_as_user.sh
-        depends_on:
-          - postgres
-        networks:
-          - postgres
+  bifrost-container:
+    image: ghcr.io/userver-framework/ubuntu-22.04-userver-pg:latest
+    privileged: true
+    environment:
+      <<: *db_env
+      PREFIX: ${PREFIX:-~/.local}
+      CCACHE_DIR: /bifrost/.ccache
+      CORES_DIR: /cores
+    volumes:
+      - .:/bifrost:rw
+      - ${TC_CORES_DIR:-./.cores}:/cores:rw
+    ports:
+      - 8080:8080
+      - 8085:8081
+    working_dir: /bifrost
+    entrypoint:
+      - ./tests/run_as_user.sh
+    depends_on:
+      - postgres
+    networks:
+      - postgres
 
 networks:
-    postgres:
-        driver: bridge
+  postgres:
+    driver: bridge

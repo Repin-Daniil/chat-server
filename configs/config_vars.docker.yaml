@@ -1,7 +1,11 @@
 worker-threads: 4
 worker-fs-threads: 2
+worker-mon-threads: 2
+
 logger-level: debug
 
+stand-alone: true
 is-testing: false
 
-server-port: 8080
+server-port: 8081
+chat-port: 8080

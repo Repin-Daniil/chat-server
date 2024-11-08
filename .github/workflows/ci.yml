@@ -67,17 +67,17 @@ jobs:
           - name: Test run after install
             if: matrix.make == 'test-release'
             run: >-
-                ./local_installation/bin/chat_server
-                --config=./local_installation/etc/chat_server/static_config.yaml
-                --config_vars=./local_installation/etc/chat_server/config_vars.yaml
+                ./local_installation/bin/bifrost
+                --config=./local_installation/etc/bifrost/static_config.yaml
+                --config_vars=./local_installation/etc/bifrost/config_vars.yaml
                 &
 
           - name: Check work run service
             if: matrix.make == 'test-release'
             run: |
-                ps aux | grep chat_server | grep config && curl http://localhost:8080/ping -v
+                ps aux | grep bifrost | grep config && curl http://localhost:8080/ping -v
 
           - name: Stop all
             if: matrix.make == 'test-release'
             run: |
-                killall chat_server
+                killall bifrost

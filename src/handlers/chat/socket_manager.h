@@ -18,30 +18,23 @@
 #include <userver/testsuite/testsuite_support.hpp>
 #include <utility>
 
-namespace bifrost {
+#include "app/application_component.h"
 
-using namespace userver;
-struct Stats;
+namespace bifrost::handlers::chat {
+  struct Stats;
 
-using Queue = concurrent::SpscQueue<std::string>;
+  class SocketManager final : public userver::components::TcpAcceptorBase {
+  public:
+    static constexpr std::string_view kName = "socket-manager";
 
-struct Dialog {
-  std::shared_ptr<Queue> queue_1;
-  std::shared_ptr<Queue> queue_2;
-};
-
-class Bifrost final : public components::TcpAcceptorBase {
-public:
-    static constexpr std::string_view kName = "tcp-echo";
-
-    Bifrost(const components::ComponentConfig& config, const components::ComponentContext& context);
+    SocketManager(const components::ComponentConfig& config,
+            const components::ComponentContext& context);
 
     void ProcessSocket(engine::io::Socket&& sock) override;
 
-private:
+  private:
+    app::Chat& chat_;
     Stats& stats_;
-    engine::Mutex mutex_;
-    Dialog dialog_;
-};
-
-}  // namespace samples::tcp::echo
+    // utils::parser;
+  };
+}

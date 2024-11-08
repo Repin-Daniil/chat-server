@@ -1,9 +1,13 @@
 worker-threads: 4
 worker-fs-threads: 2
+worker-mon-threads: 2
+
 logger-level: info
 
+stand-alone: true
 is-testing: false
 
 server-port: 8080
+chat-port: 8081
 
-dbconnection: 'postgresql://chat_server_user:password@localhost:5432/chat_server_db_1'
+dbconnection: 'postgresql://bifrost_user:password@localhost:5432/bifrost_db_1'

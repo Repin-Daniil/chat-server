@@ -1,56 +1,86 @@
-# yaml
 components_manager:
-    task_processors:                  # Task processor is an executor for coroutine tasks
+  task_processors:
+    main-task-processor:
+      worker_threads: $worker-threads
+    fs-task-processor:
+      worker_threads: $worker-fs-threads
+    admin-task-processor:
+      worker_threads: $worker-mon-threads
+      thread_name: mon-worker
+  default_task_processor: main-task-processor
 
-        main-task-processor:          # Make a task processor for CPU-bound coroutine tasks.
-            worker_threads: 4         # Process tasks in 4 threads.
+  components:
+    server:
+      listener:
+        port: $server-port
+        port#fallback: 8080
+        task_processor: admin-task-processor
 
-        fs-task-processor:            # Make a separate task processor for filesystem bound tasks.
-            worker_threads: 4
+    socket-manager:
+      task_processor: main-task-processor         # Run socket accepts on CPU bound task processor
+      sockets_task_processor: main-task-processor # Run ProcessSocket() for each new socket on CPU bound task processor
+      port: $chat-port
+#      port#fallback: 8081
 
-        monitor-task-processor:       # Make a separate task processor for administrative tasks.
-            worker_threads: 2
-            thread_name: mon-worker
+    logging:
+      fs-task-processor: fs-task-processor
+      loggers:
+        default:
+          file_path: '@stderr'
+          level: $logger-level
+          overflow_behavior: discard
 
-    default_task_processor: main-task-processor  # Task processor in which components start.
+    dynamic-config:
+      defaults:
+        HTTP_CLIENT_CONNECTION_POOL_SIZE: 1000
+        POSTGRES_DEFAULT_COMMAND_CONTROL:
+          network_timeout_ms: 750
+          statement_timeout_ms: 500
 
-    components:                       # Configuring components that were registered via component_list
-        logging:
-            fs-task-processor: fs-task-processor
-            loggers:
-                default:
-                    file_path: '@stderr'
-                    level: debug
-                    overflow_behavior: discard  # Drop logs if the system is too busy to write them down.
+    testsuite-support: { }
 
-        # /// [TCP component]
-        # yaml
-        tcp-echo:
-            task_processor: main-task-processor         # Run socket accepts on CPU bound task processor
-            sockets_task_processor: main-task-processor # Run ProcessSocket() for each new socket on CPU bound task processor
-            port: 8080
-        # /// [TCP component]
+    http-client:
+      load-enabled: $is-testing
+      fs-task-processor: fs-task-processor
 
-        # /// [HTTP and stats]
-        # yaml
-        server:
-            listener:
-                port: 8182            # ...to listen on this port and...
-                task_processor: monitor-task-processor    # ...process incoming requests on this task processor.
-        handler-server-monitor:
-            path: /service/monitor
-            method: GET
-            task_processor: monitor-task-processor
-            monitor-handler: false
-        # /// [HTTP and stats]
+    tests-control:
+      load-enabled: $is-testing
+      path: /tests/{action}
+      method: POST
+      task_processor: main-task-processor
 
-        # Testuite stuff
-        testsuite-support:
-        tests-control:
-            path: /tests/{action}
-            method: POST
-            task_processor: main-task-processor
-        http-client:
-            fs-task-processor: fs-task-processor
-        dns-client:                     # Asynchronous DNS component
-            fs-task-processor: fs-task-processor
+    handler-ping:
+      path: /ping
+      method: GET
+      task_processor: main-task-processor
+      throttling_enabled: false
+      url_trailing_slash: strict-match
+
+    application:
+      load-enabled: true
+
+    registry:
+      load-enabled: true
+#      stand-alone: $stand-alone
+
+    auth-manager:
+      load-enabled: true
+#      stand-alone: $stand-alone
+
+
+    postgres-db-1:
+      dbconnection: $dbconnection
+      dbconnection#env: DB_CONNECTION
+      blocking_task_processor: fs-task-processor
+      dns_resolver: async
+      sync-start: false
+      connlimit_mode: manual
+
+    handler-server-monitor:
+      path: /service/monitor
+      method: GET
+      task_processor: admin-task-processor
+      monitor-handler: false
+
+    dns-client:
+      fs-task-processor: fs-task-processor

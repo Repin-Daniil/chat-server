@@ -1,0 +1,34 @@
+#pragma once
+#include "userver/concurrent/queue.hpp"
+
+namespace bifrost::app {
+
+using Login = std::string;
+
+struct User {
+   Login login;
+};
+//TODO переместить в чат
+struct Message {
+    User sender;
+    std::string text;
+
+    // User recipient;
+    // Time time?
+};
+
+using Queue = userver::concurrent::NonFifoMpscQueue<Message>;
+
+namespace registry {
+
+class Receiver {
+public:
+    virtual bool Send(Message message) = 0;
+
+    //TODO Destruct(), Flush()??? Добавить какие-нибудь операции для работы с очередью; МБ гет продьюсер, г
+
+    virtual ~Receiver() = default;
+};
+
+}
+}

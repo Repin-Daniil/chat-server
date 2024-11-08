@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.12)
-project(chat_server CXX)
+project(bifrost CXX)
 
 
-find_package(userver COMPONENTS core QUIET)
+find_package(userver COMPONENTS core postgresql QUIET)
 
-if(NOT userver_FOUND)  # Fallback to subdirectory usage
+if (NOT userver_FOUND)  # Fallback to subdirectory usage
     # Enable userver libraries that are needed in this project
     set(USERVER_FEATURE_POSTGRESQL ON CACHE BOOL "" FORCE)
 
@@ -16,16 +16,44 @@ if(NOT userver_FOUND)  # Fallback to subdirectory usage
     if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/third_party/userver)
         message(STATUS "Using userver framework from third_party/userver")
         add_subdirectory(third_party/userver)
-    else()
+    else ()
         message(FATAL_ERROR "Either install the userver or provide a path to it")
-    endif()
-endif()
+    endif ()
+endif ()
+
 userver_setup_environment()
 
-add_executable(${PROJECT_NAME} src/main.cpp
-        src/bifrost.cpp
-        src/bifrost.h)
-target_link_libraries(${PROJECT_NAME} userver::core)
+
+# Common sources
+add_library(${PROJECT_NAME}_objs OBJECT
+        src/app/chat/chat.h
+        src/handlers/chat/socket_manager.h
+        src/app/registry/stand_alone/user_registry.h
+        src/app/auth/stand_alone/auth_manager.h
+        src/app/registry/stand_alone/receiver.h
+        src/app/registry/stand_alone/receivers/single_receiver.h
+        src/app/application_component.h
+        src/app/auth/auth_component.h
+        src/app/registry/registry_component.h
+
+        src/app/auth/auth_component.cpp
+        src/app/application_component.cpp
+        src/app/registry/stand_alone/receivers/single_receiver.cpp
+        src/app/registry/registry_component.cpp
+        src/app/registry/stand_alone/user_registry.cpp
+        src/app/auth/stand_alone/auth_manager.cpp
+        src/app/chat/chat.cpp
+        src/handlers/chat/socket_manager.cpp
+)
+include_directories(src)
+
+target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::postgresql)
+# Later userver::postgresql
+
+# The Service
+add_executable(${PROJECT_NAME} src/main.cpp)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_objs)
 
 userver_testsuite_add_simple()
 
@@ -86,15 +114,14 @@ userver_testsuite_add_simple()
 #include(UserverTestsuite)
 
 
-
 # Install
 include(GNUInstallDirs)
 
-if(DEFINED ENV{PREFIX})
-  message(STATUS "Set install prefix: $ENV{PREFIX}")
-  file(TO_CMAKE_PATH "$ENV{PREFIX}" PREFIX_PATH)
-  set(CMAKE_INSTALL_PREFIX ${PREFIX_PATH})
-endif()
+if (DEFINED ENV{PREFIX})
+    message(STATUS "Set install prefix: $ENV{PREFIX}")
+    file(TO_CMAKE_PATH "$ENV{PREFIX}" PREFIX_PATH)
+    set(CMAKE_INSTALL_PREFIX ${PREFIX_PATH})
+endif ()
 
 file(GLOB CONFIGS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/configs/*.yaml ${CMAKE_CURRENT_SOURCE_DIR}/configs/*.json)
 
