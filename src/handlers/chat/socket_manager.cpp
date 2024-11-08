@@ -10,7 +10,7 @@ struct Stats {
 namespace {
 std::pair<std::string, std::string> ParseAuthData(std::string message) {
     auto at = message.find('@');
-    const std::size_t deilimiter_size = 4;
+    const std::size_t deilimiter_size = 8;
 
     if (at == std::string::npos || at == 0 || at >= message.length() - deilimiter_size) {
         return {};
@@ -24,13 +24,14 @@ std::pair<std::string, std::string> ParseAuthData(std::string message) {
 
 std::pair<std::string, std::string> ParseMessage(std::string text) {
     auto at = text.find('@');
+    const std::size_t deilimiter_size = 8;
 
-    if (at == std::string::npos || at == 0 || at >= text.length() - 4) {
+    if (at == std::string::npos || at == 0 || at >= text.length() - deilimiter_size) {
         return {};
     }
 
     auto login = text.substr(0, at);
-    auto message = text.substr(at + 1, text.length() - at - 4);
+    auto message = text.substr(at + 1, text.length() - at - deilimiter_size);
 
     return {login, message};
 }
@@ -85,10 +86,10 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
             continue;
         }
 
+        LOG_DEBUG() << "Start sending message from" << login << " to " << recipient;
+
         if (!chat.Send(recipient, {login, message})) {
             Send(sock, "Can't send message: " + message + " to " + recipient);
-        } else {
-            LOG_DEBUG() << "Start sending message from" << login << " to " << recipient;
         }
     }
 }
