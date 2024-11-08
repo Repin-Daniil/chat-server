@@ -167,7 +167,7 @@ void SocketManager::ProcessSocket(engine::io::Socket&& sock) {
 
     //todo вынести метрики в отдельный файли
     LOG_DEBUG() << "Socket manager: Sending OK to client";
-    chat_.Send(login, {"Server", "OK"});
+    chat_.Send(login, {"Server", "OK\r\n\r\n"});
 
     auto send_task = utils::Async("send", DoSend, std::ref(sock), login, queue->GetConsumer());
     DoRecv(sock, login, chat_, stats_);
