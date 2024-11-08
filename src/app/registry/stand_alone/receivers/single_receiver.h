@@ -3,15 +3,11 @@
 namespace bifrost::app::registry {
 class SingleReceiver : public Receiver {
 public:
-    SingleReceiver(std::shared_ptr<Queue> queue, std::string id) : id_(std::move(id)),
-                                                                               queue_(std::move(queue)),
-                                                                               producer_(queue_->GetMultiProducer()) {
-        //    LOG_DEBUG() << "Create SingleReceiver " << id_;
-    }
+    SingleReceiver(std::shared_ptr<Queue> queue, std::string id);
 
     bool Send(Message message) override;
 
-//    ~SingleReceiver() = d;
+    ~SingleReceiver();
 
 private:
     std::string id_;

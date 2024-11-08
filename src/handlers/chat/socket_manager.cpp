@@ -8,29 +8,50 @@ struct Stats {
 };
 
 namespace {
-
 std::pair<std::string, std::string> ParseAuthData(std::string message) {
-    std::string user = message.substr(0, message.find('@'));
-    std::string token = message.substr(message.find('@') + 1, message.length() - 4);
+    auto at = message.find('@');
+    const std::size_t deilimiter_size = 4;
 
-    return std::make_pair(user, token);
+    if (at == std::string::npos || at == 0 || at >= message.length() - deilimiter_size) {
+        return {};
+    }
+
+    std::string user = message.substr(0, at);
+    std::string token = message.substr(at + 1, message.length() - at - deilimiter_size);
+
+    return {user, token};
 }
 
-app::Message ParseMessage(std::string message) {
-    app::Message msg;
-    //TODO Поставитьв везде обработку исключений!
-    msg.sender.login = message.substr(0, message.find('@'));
-    msg.text = message.substr(message.find('@') + 1, message.length() - 4);
+std::pair<std::string, std::string> ParseMessage(std::string text) {
+    auto at = text.find('@');
 
-    return msg;
+    if (at == std::string::npos || at == 0 || at >= text.length() - 4) {
+        return {};
+    }
+
+    auto login = text.substr(0, at);
+    auto message = text.substr(at + 1, text.length() - at - 4);
+
+    return {login, message};
 }
 
 std::string SerializeMessage(app::Message msg) {
     return msg.sender.login + "@" + msg.text;
 }
 
+bool Send(userver::engine::io::Socket& sock, std::string message) {
+    LOG_INFO() << "Send to Client from server: " << message;
+    const auto sent_bytes = sock.SendAll(message.data(), message.size(), {});
 
-void DoSend(userver::engine::io::Socket& sock, app::Queue::Consumer consumer) {
+    if (sent_bytes != message.size()) {
+        LOG_INFO() << "Failed to send all the message";
+        return false;
+    }
+
+    return true;
+}
+
+void DoSend(userver::engine::io::Socket& sock, std::string login, app::Queue::Consumer consumer) {
     app::Message message;
     while (consumer.Pop(message)) {
         std::string data = SerializeMessage(message);
@@ -40,6 +61,8 @@ void DoSend(userver::engine::io::Socket& sock, app::Queue::Consumer consumer) {
             LOG_INFO() << "Failed to send all the data";
             return;
         }
+
+        LOG_TRACE() << "Start sending message from" << message.sender.login << " to " << login;
     }
 }
 
@@ -57,8 +80,15 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
         stats.bytes_read += read_bytes;
         auto [recipient, message] = ParseMessage(buf.data());
 
-        if (!chat.Send(recipient.login, {login,message})) {
-            // Говорим в сокет, что не получилось отправить. Наверное, надо будет продюсера сюда еще прокинуть
+        if (message.empty() || recipient.empty()) {
+            LOG_WARNING() << "Empty message or recipient!";
+            continue;
+        }
+
+        if (!chat.Send(recipient, {login, message})) {
+            Send(sock, "Can't send message: " + message + " to " + recipient);
+        } else {
+            LOG_TRACE() << "Start sending message from" << login << " to " << recipient;
         }
     }
 }
@@ -66,7 +96,7 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
 std::pair<std::string, std::string> RecieveAuthData(userver::engine::io::Socket& sock) {
     std::array<char, 1024> buf; // NOLINT(cppcoreguidelines-pro-type-member-init)
 
-    if(!engine::current_task::ShouldCancel()) {
+    if (!engine::current_task::ShouldCancel()) {
         const auto read_bytes = sock.ReadSome(buf.data(), buf.size(), {});
 
         if (!read_bytes) {
@@ -74,7 +104,10 @@ std::pair<std::string, std::string> RecieveAuthData(userver::engine::io::Socket&
             return {};
         }
 
-        return ParseAuthData(buf.data());
+        auto [recipient, message] = ParseAuthData(buf.data());
+        LOG_TRACE() << "Get Auth data. Recipient: " << recipient << "; Message: " << message;
+
+        return {recipient, message};
     }
 
     return {};
@@ -98,13 +131,13 @@ void ResetMetric(Stats& stats) {
 SocketManager::SocketManager(const components::ComponentConfig& config,
                              const components::ComponentContext& context)
     : TcpAcceptorBase(config, context),
-      stats_(context.FindComponent<components::StatisticsStorage>().GetMetricsStorage()->GetMetric(kTcpEchoTag)),
-      chat_(context.FindComponent<app::Application>().GetApp()) {
+      chat_(context.FindComponent<app::Application>().GetApp()),
+      stats_(context.FindComponent<components::StatisticsStorage>().GetMetricsStorage()->GetMetric(kTcpEchoTag)) {
 }
 
 void SocketManager::ProcessSocket(engine::io::Socket&& sock) {
     const auto sock_num = ++stats_.opened_sockets;
-    LOG_INFO() << "New socket: " << stats_.opened_sockets; // А это само не делается что ли?
+    LOG_TRACE() << "New socket: " << stats_.opened_sockets; // А это само не делается что ли?
 
     utils::FastScopeGuard guard{
         [this, sock_num]() noexcept {
@@ -116,23 +149,24 @@ void SocketManager::ProcessSocket(engine::io::Socket&& sock) {
     tracing::Span span{fmt::format("sock_{}", sock_num)};
     span.AddTag("fd", std::to_string(sock.Fd()));
 
-
     auto [login, token] = RecieveAuthData(sock);
 
     if (login.empty() || token.empty() || !chat_.Verify()) {
-        // Объясняем причину и рвем сокет
+        Send(sock, "Wrong token or protocol");
         return;
     }
 
     auto queue = chat_.Register(login);
 
     if (!queue) {
-        // Уже есть очередь и живой консьюмер, объясняем причину и рвем сокет
+        Send(sock, "User with this token already has an active session");
+        return;
     }
 
-    //todo вынести метрики в отдельный файлик
+    //todo вынести метрики в отдельный файли
+    chat_.Send(login, {"Server", "OK"});
 
-    auto send_task = utils::Async("send", DoSend, std::ref(sock), queue->GetConsumer());
+    auto send_task = utils::Async("send", DoSend, std::ref(sock), login, queue->GetConsumer());
     DoRecv(sock, login, chat_, stats_);
 }
 } // namespace bifrost
