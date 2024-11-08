@@ -107,7 +107,7 @@ std::pair<std::string, std::string> RecieveAuthData(userver::engine::io::Socket&
         auto [recipient, token] = ParseAuthData(buf.data());
         LOG_TRACE() << "Get Auth data. Recipient: " << recipient << "; Token: " << token;
 
-        return {recipient, message};
+        return {recipient, token};
     }
 
     return {};
