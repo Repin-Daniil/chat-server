@@ -62,7 +62,7 @@ void DoSend(userver::engine::io::Socket& sock, std::string login, app::Queue::Co
             return;
         }
 
-        LOG_TRACE() << "Start sending message from" << message.sender.login << " to " << login;
+        LOG_TRACE() << "Send message from" << message.sender.login << " to " << login;
     }
 }
 
@@ -104,8 +104,8 @@ std::pair<std::string, std::string> RecieveAuthData(userver::engine::io::Socket&
             return {};
         }
 
-        auto [recipient, message] = ParseAuthData(buf.data());
-        LOG_TRACE() << "Get Auth data. Recipient: " << recipient << "; Message: " << message;
+        auto [recipient, token] = ParseAuthData(buf.data());
+        LOG_TRACE() << "Get Auth data. Recipient: " << recipient << "; Token: " << token;
 
         return {recipient, message};
     }
@@ -152,18 +152,21 @@ void SocketManager::ProcessSocket(engine::io::Socket&& sock) {
     auto [login, token] = RecieveAuthData(sock);
 
     if (login.empty() || token.empty() || !chat_.Verify()) {
-        Send(sock, "Wrong token or protocol");
+        Send(sock, "Socket manager: Wrong token or protocol");
         return;
     }
+
+    LOG_TRACE() << "Login: " << login << " Token: " << token;
 
     auto queue = chat_.Register(login);
 
     if (!queue) {
-        Send(sock, "User with this token already has an active session");
+        Send(sock, "Socket manager: User with this token already has an active session");
         return;
     }
 
     //todo вынести метрики в отдельный файли
+    LOG_TRACE() << "Socket manager: Sending OK to client";
     chat_.Send(login, {"Server", "OK"});
 
     auto send_task = utils::Async("send", DoSend, std::ref(sock), login, queue->GetConsumer());

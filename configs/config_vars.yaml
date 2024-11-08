@@ -2,7 +2,7 @@ worker-threads: 4
 worker-fs-threads: 2
 worker-mon-threads: 2
 
-logger-level: info
+logger-level: trace
 
 stand-alone: true
 is-testing: false
