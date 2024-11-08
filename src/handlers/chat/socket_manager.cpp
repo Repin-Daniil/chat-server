@@ -11,10 +11,10 @@ namespace {
 std::pair<std::string, std::string> ParseAuthData(std::string message) {
     auto at = message.find('@');
     const std::size_t deilimiter_size = 4;
-
-    if (at == std::string::npos || at == 0 || at >= message.length() - deilimiter_size) {
-        return {};
-    }
+//
+//    if (at == std::string::npos || at == 0 || at >= message.length() - deilimiter_size) {
+//        return {};
+//    }
 
     std::string user = message.substr(0, at);
     std::string token = message.substr(at + 1, message.length() - at - deilimiter_size);
@@ -25,10 +25,10 @@ std::pair<std::string, std::string> ParseAuthData(std::string message) {
 std::pair<std::string, std::string> ParseMessage(std::string text) {
     auto at = text.find('@');
     const std::size_t deilimiter_size = 4;
-
-    if (at == std::string::npos || at == 0 || at >= text.length() - deilimiter_size) {
-        return {};
-    }
+//
+//    if (at == std::string::npos || at == 0 || at >= text.length() - deilimiter_size) {
+//        return {};
+//    }
 
     auto login = text.substr(0, at);
     auto message = text.substr(at + 1, text.length() - at - deilimiter_size);
