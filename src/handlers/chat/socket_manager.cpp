@@ -62,7 +62,7 @@ void DoSend(userver::engine::io::Socket& sock, std::string login, app::Queue::Co
             return;
         }
 
-        LOG_TRACE() << "Send message from" << message.sender.login << " to " << login;
+        LOG_DEBUG() << "Send message from" << message.sender.login << " to " << login;
     }
 }
 
@@ -88,7 +88,7 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
         if (!chat.Send(recipient, {login, message})) {
             Send(sock, "Can't send message: " + message + " to " + recipient);
         } else {
-            LOG_TRACE() << "Start sending message from" << login << " to " << recipient;
+            LOG_DEBUG() << "Start sending message from" << login << " to " << recipient;
         }
     }
 }
@@ -105,7 +105,7 @@ std::pair<std::string, std::string> RecieveAuthData(userver::engine::io::Socket&
         }
 
         auto [recipient, token] = ParseAuthData(buf.data());
-        LOG_TRACE() << "Get Auth data. Recipient: " << recipient << "; Token: " << token;
+        LOG_DEBUG() << "Get Auth data. Recipient: " << recipient << "; Token: " << token;
 
         return {recipient, token};
     }
@@ -137,11 +137,11 @@ SocketManager::SocketManager(const components::ComponentConfig& config,
 
 void SocketManager::ProcessSocket(engine::io::Socket&& sock) {
     const auto sock_num = ++stats_.opened_sockets;
-    LOG_TRACE() << "New socket: " << stats_.opened_sockets; // А это само не делается что ли?
+    LOG_DEBUG() << "New socket: " << stats_.opened_sockets; // А это само не делается что ли?
 
     utils::FastScopeGuard guard{
         [this, sock_num]() noexcept {
-            LOG_TRACE() << "Close socket: " << sock_num;
+            LOG_DEBUG() << "Close socket: " << sock_num;
             ++stats_.closed_sockets;
         }
     };
@@ -156,7 +156,7 @@ void SocketManager::ProcessSocket(engine::io::Socket&& sock) {
         return;
     }
 
-    LOG_TRACE() << "Login: " << login << " Token: " << token;
+    LOG_DEBUG() << "Login: " << login << " Token: " << token;
 
     auto queue = chat_.Register(login);
 
@@ -166,7 +166,7 @@ void SocketManager::ProcessSocket(engine::io::Socket&& sock) {
     }
 
     //todo вынести метрики в отдельный файли
-    LOG_TRACE() << "Socket manager: Sending OK to client";
+    LOG_DEBUG() << "Socket manager: Sending OK to client";
     chat_.Send(login, {"Server", "OK"});
 
     auto send_task = utils::Async("send", DoSend, std::ref(sock), login, queue->GetConsumer());

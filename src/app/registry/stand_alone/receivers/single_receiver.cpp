@@ -6,7 +6,7 @@ namespace bifrost::app::registry {
 SingleReceiver::SingleReceiver(std::shared_ptr<Queue> queue, std::string id) : id_(std::move(id)),
                                                                                queue_(std::move(queue)),
                                                                                producer_(queue_->GetMultiProducer()) {
-    LOG_TRACE() << "Create SingleReceiver " << id_;
+    LOG_DEBUG() << "Create SingleReceiver " << id_;
 }
 
 bool SingleReceiver::Send(Message message) {
@@ -15,12 +15,12 @@ bool SingleReceiver::Send(Message message) {
         return false;
     }
 
-    LOG_TRACE() << "Send message from" << message.sender.login << " with text: " << message.text;
+    LOG_DEBUG() << "Send message from" << message.sender.login << " with text: " << message.text;
     LOG_DEBUG() << "Message from" << message.sender.login << " to " << id_ << " was sucessfully pushed to queue";
     return true;
 }
 
 SingleReceiver::~SingleReceiver() {
-    LOG_TRACE() << "Destruct SingleReceiver " << id_;
+    LOG_DEBUG() << "Destruct SingleReceiver " << id_;
 }
 }
