@@ -1,4 +1,10 @@
-INSERT INTO hello_schema.users(name, count)
-VALUES ('user-from-initial_data.sql', 42)
-ON CONFLICT (name)
-DO NOTHING;
+WITH generated_salt AS (
+    SELECT gen_salt('bf') AS salt
+)
+
+INSERT INTO users (login, password, salt)
+SELECT
+    'Ivan',  -- Логин
+    crypt('ivan_password', salt),  -- Хеш пароля с солью
+    salt  -- Соль
+FROM generated_salt;

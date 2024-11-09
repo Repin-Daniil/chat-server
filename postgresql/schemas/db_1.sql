@@ -1,8 +1,13 @@
-DROP SCHEMA IF EXISTS hello_schema CASCADE;
+DROP SCHEMA IF EXISTS bifrost CASCADE;
 
-CREATE SCHEMA IF NOT EXISTS hello_schema;
 
-CREATE TABLE IF NOT EXISTS hello_schema.users (
-    name TEXT PRIMARY KEY,
-    count INTEGER DEFAULT(1)
+CREATE SCHEMA IF NOT EXISTS bifrost;
+
+CREATE EXTENSION pgcrypto;
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    login varchar(100),
+    password text,
+    salt text,
+    registered timestamp DEFAULT(now())
 );

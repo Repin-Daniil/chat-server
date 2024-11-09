@@ -8,10 +8,11 @@ std::shared_ptr<Queue> UserRegistry::AddReceiver(const Login& new_recipient) {
 
     auto [receiver, is_inserted] = login_to_receiver_.Insert(new_recipient, std::make_shared<SingleReceiver>(queue, new_recipient));
 
-    if (!is_inserted && !queue->NoMoreConsumers()) {
-        LOG_WARNING() << "Receiver with id " << new_recipient << " already exists";
-        return {};
-    }
+    //FIXME Раскомментить
+    // if (!is_inserted && !queue->NoMoreConsumers()) {
+    //     LOG_WARNING() << "Receiver with id " << new_recipient << " already exists";
+    //     return {};
+    // }
 
     LOG_INFO() << "Add user with id " << new_recipient << " to registry";
 
