@@ -90,7 +90,7 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
         stats.bytes_read += read_bytes;
 
         LOG_DEBUG() << "DoRecv(): Get new message. Buffer: " << buf.data();
-        current_data += buf.data();
+        current_data += {buf.data(), read_bytes};
 
         if (current_data.find("\r\n\r\n") == std::string::npos) {
             continue;
