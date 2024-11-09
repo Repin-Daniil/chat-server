@@ -43,18 +43,18 @@ std::pair<std::string, std::string> ParseMessage(std::string text) {
 std::string SerializeMessage(app::Message msg) {
     return msg.sender.login + "@" + msg.text + "\r\n\r\n";
 }
-
-bool Send(userver::engine::io::Socket& sock, std::string message) {
-    LOG_INFO() << "Send to Client from server: " << message;
-    const auto sent_bytes = sock.SendAll(message.data(), message.size(), {});
-
-    if (sent_bytes != message.size()) {
-        LOG_INFO() << "Failed to send all the message";
-        return false;
-    }
-
-    return true;
-}
+//
+//bool Send(userver::engine::io::Socket& sock, std::string message) {
+//    LOG_INFO() << "Send to Client from server: " << message;
+//    const auto sent_bytes = sock.SendAll(message.data(), message.size(), {});
+//
+//    if (sent_bytes != message.size()) {
+//        LOG_INFO() << "Failed to send all the message";
+//        return false;
+//    }
+//
+//    return true;
+//}
 
 void DoSend(userver::engine::io::Socket& sock, std::string login, app::Queue::Consumer consumer) {
     app::Message message;
@@ -74,10 +74,10 @@ void DoSend(userver::engine::io::Socket& sock, std::string login, app::Queue::Co
 }
 
 void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& chat, Stats& stats) {
-    std::array<char, 5096> buf; // NOLINT(cppcoreguidelines-pro-type-member-init)
+    std::array<char, 1024> buf; // NOLINT(cppcoreguidelines-pro-type-member-init)
 
     while (!engine::current_task::ShouldCancel()) {
-        const auto read_bytes = sock.ReadSome(buf.data(), buf.size(), {});
+        const auto read_bytes = sock.ReadAll(buf.data(), buf.size(), {});
 
         if (!read_bytes) {
             LOG_WARNING() << "Failed to read data in DoRecv";
