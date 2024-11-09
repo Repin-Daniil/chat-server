@@ -7,7 +7,8 @@ namespace bifrost::app {
 class Chat {
 public:
     Chat(auth::AuthManager& auth, registry::UserRegistry &registry);
-    bool Verify();
+    auth::Token AuthenticateUser(const Login& login, const std::string& password);
+    bool Verify(const Login& login, const auth::Token & token);
 
     bool Send(const Login& recipient, Message message);
 

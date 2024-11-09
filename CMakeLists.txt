@@ -35,9 +35,11 @@ add_library(${PROJECT_NAME}_objs OBJECT
         src/app/application_component.h
         src/app/auth/auth_component.h
         src/app/registry/registry_component.h
+        src/handlers/auth/auth_registration_handler.h
 
         src/app/auth/auth_component.cpp
         src/app/application_component.cpp
+        src/handlers/auth/auth_registration_handler.cpp
         src/app/registry/stand_alone/receivers/single_receiver.cpp
         src/app/registry/registry_component.cpp
         src/app/registry/stand_alone/user_registry.cpp

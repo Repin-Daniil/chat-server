@@ -1,3 +1,4 @@
+#pragma once
 #include "app/registry/stand_alone/receiver.h"
 
 namespace bifrost::app::registry {

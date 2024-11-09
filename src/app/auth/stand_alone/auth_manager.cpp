@@ -1,40 +1,33 @@
 #include "auth_manager.h"
 
-#include <iomanip>
-#include <random>
-#include <sstream>
 
 namespace bifrost::app::auth {
-  class TokenGenerator {
-    public:
-      std::string GenerateNewToken() {
-        std::stringstream ss;
+AuthManager::AuthManager(userver::storages::postgres::ClusterPtr pg_cluster) : pg_cluster_(pg_cluster) {
+}
 
-        while (ss.str().size() != 32) {
-          ss.clear();
-          ss << std::setfill('0') << std::setw(16) << std::hex << generator1_();
-          ss << std::setfill('0') << std::setw(16) << std::hex << generator2_();
-        }
+//FIXME Вынести в отдельный классс
 
-        return ss.str();
-      }
+Token AuthManager::AuthenticateUser(const std::string& login, const std::string& password) {
+    // Проверить действительно ли этому пользователлю соответствует такой пароль
 
-    private:
-      std::random_device random_device_;
-      std::mt19937_64 generator1_{
-        [this] {
-          std::uniform_int_distribution<std::mt19937_64::result_type> dist;
-          return dist(random_device_);
-        }()
-      };
+    auto token = generator_.GenerateNewToken();
 
-      std::mt19937_64 generator2_{
-        [this] {
-          std::uniform_int_distribution<std::mt19937_64::result_type> dist;
-          return dist(random_device_);
-        }()
-      };
-  };
+    //Нужна Бимапа, чтобы одному пользователю соответствовал один токен
 
+    bool is_token_unique = false;
+
+    do {
+        auto [auth_data, flag] = token_map_.TryEmplace(token, login);
+        is_token_unique = flag;
+    } while (!is_token_unique);
+
+    return token;
+}
+
+bool AuthManager::VerifyToken(const std::string& login, const Token& token) {
+    auto ptr = token_map_.Get(token);
+
+    return ptr && (*ptr == login);
+}
 
 }

@@ -4,8 +4,12 @@ namespace bifrost::app {
 Chat::Chat(auth::AuthManager& auth, registry::UserRegistry& registry) : auth_(auth), registry_(registry) {
 }
 
-bool Chat::Verify() {
-    return true;
+auth::Token Chat::AuthenticateUser(const Login& login, const std::string& password) {
+    return auth_.AuthenticateUser(login, password);
+}
+
+bool Chat::Verify(const Login& login, const auth::Token& token) {
+    return auth_.VerifyToken(login, token);
 }
 
 bool Chat::Send(const Login& recipient, Message message) {

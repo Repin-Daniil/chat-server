@@ -1,3 +1,4 @@
+#pragma once
 #include "userver/components/component_base.hpp"
 #include <userver/components/component_context.hpp>
 

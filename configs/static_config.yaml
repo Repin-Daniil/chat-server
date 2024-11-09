@@ -56,6 +56,12 @@ components_manager:
       throttling_enabled: false
       url_trailing_slash: strict-match
 
+    handler-auth-registration:
+      path: /v1/auth/reg
+      method: POST
+      task_processor: main-task-processor
+      parse_args_from_body: true
+
     application:
       load-enabled: true
 

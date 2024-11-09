@@ -177,7 +177,7 @@ void SocketManager::ProcessSocket(engine::io::Socket&& sock) {
     auto [login, token] = RecieveAuthData(sock);
     LOG_INFO() << "ProcessSocket(): Get Auth Data{" <<"Login: " << login << "; Token: " << token << "}";
 
-    if (login.empty() || token.empty() || !chat_.Verify()) {
+    if (login.empty() || token.empty() || !chat_.Verify(login, token)) {
         LOG_WARNING() << "ProcessSocket(): Token or Login is empty, or wrong token";
         return;
     }
