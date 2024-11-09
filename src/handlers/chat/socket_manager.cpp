@@ -78,7 +78,7 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
     std::string current_data;
 
     while (!engine::current_task::ShouldCancel()) {
-        const auto read_bytes = sock.ReadAll(buf.data(), buf.size(), {});
+        const auto read_bytes = sock.ReadSome(buf.data(), buf.size(), {});
 
         if (!read_bytes) {
             LOG_WARNING() << "Failed to read data in DoRecv";
