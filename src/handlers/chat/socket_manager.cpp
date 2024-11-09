@@ -69,12 +69,12 @@ void DoSend(userver::engine::io::Socket& sock, std::string login, app::Queue::Co
             return;
         }
 
-        LOG_DEBUG() << "DoSend(): Successfully send message from" << message.sender.login << " to " << login;
+        LOG_DEBUG() << "DoSend(): Successfully send message from " << message.sender.login << " to " << login;
     }
 }
 
 void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& chat, Stats& stats) {
-    std::array<char, 1024> buf; // NOLINT(cppcoreguidelines-pro-type-member-init)
+    std::array<char, 5096> buf; // NOLINT(cppcoreguidelines-pro-type-member-init)
 
     while (!engine::current_task::ShouldCancel()) {
         const auto read_bytes = sock.ReadSome(buf.data(), buf.size(), {});
@@ -116,7 +116,7 @@ std::pair<std::string, std::string> RecieveAuthData(userver::engine::io::Socket&
             return {};
         }
 
-        LOG_DEBUG() << "RecieveAuthData(): Successfully read from socket, auth data: " << read_bytes;
+        LOG_DEBUG() << "RecieveAuthData(): Successfully read from socket, auth data: " << buf.data();
 
         auto [recipient, token] = ParseAuthData(buf.data());
         LOG_DEBUG() << "RecieveAuthData(): Parse Auth Data. Result{Recipient: " << recipient << "; Token: " << token <<"}";
