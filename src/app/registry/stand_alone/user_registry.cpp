@@ -22,11 +22,11 @@ bool UserRegistry::Send(const Login& recipient, Message message) {
     auto receiver = login_to_receiver_.Get(recipient);
 
     if (!receiver) {
-        LOG_DEBUG() << "No receiver with login " << recipient;
+        LOG_WARNING() << "Registry::Send(): No receiver with login " << recipient;
         return false;
     }
 
-    LOG_DEBUG() << "Find receiver with login " << recipient;
+    LOG_DEBUG() << "Registry::Send(): Find receiver with login " << recipient;
 
     return receiver->Send(std::move(message));
 }

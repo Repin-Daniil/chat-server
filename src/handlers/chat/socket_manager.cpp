@@ -9,6 +9,8 @@ struct Stats {
 
 namespace {
 std::pair<std::string, std::string> ParseAuthData(std::string message) {
+    LOG_DEBUG() << "ParseAuthData() Text: " << message;
+
     auto at = message.find('@');
     auto delimiter = message.find("\r\n\r\n");
 
@@ -23,6 +25,8 @@ std::pair<std::string, std::string> ParseAuthData(std::string message) {
 }
 
 std::pair<std::string, std::string> ParseMessage(std::string text) {
+    LOG_DEBUG() << "ParseMessage() Text: " << text;
+
     auto at = text.find('@');
     auto delimiter = text.find("\r\n\r\n");
 
@@ -56,14 +60,16 @@ void DoSend(userver::engine::io::Socket& sock, std::string login, app::Queue::Co
     app::Message message;
     while (consumer.Pop(message)) {
         std::string data = SerializeMessage(message);
+        LOG_DEBUG() << "DoSend(): Send Message " << data << " from " << message.sender.login;
+
         const auto sent_bytes = sock.SendAll(data.data(), data.size(), {});
 
         if (sent_bytes != data.size()) {
-            LOG_INFO() << "Failed to send all the data";
+            LOG_WARNING() << "Failed to send all the data";
             return;
         }
 
-        LOG_DEBUG() << "Send message from" << message.sender.login << " to " << login;
+        LOG_DEBUG() << "DoSend(): Successfully send message from" << message.sender.login << " to " << login;
     }
 }
 
@@ -74,12 +80,15 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
         const auto read_bytes = sock.ReadSome(buf.data(), buf.size(), {});
 
         if (!read_bytes) {
-            LOG_INFO() << "Failed to read data";
+            LOG_WARNING() << "Failed to read data in DoRecv";
             return;
         }
 
         stats.bytes_read += read_bytes;
+
+        LOG_DEBUG() << "DoRecv(): Get new message. Buffer: " << buf.data();
         auto [recipient, message] = ParseMessage(buf.data());
+        LOG_DEBUG() << "DoRecv(): Parse message: {Recipient: " << recipient << "; Message: " << message << "}";
 
         if (message.empty() || recipient.empty()) {
             LOG_WARNING() << "Empty message or recipient!";
@@ -89,7 +98,7 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
         LOG_DEBUG() << "Start sending message from" << login << " to " << recipient;
 
         if (!chat.Send(recipient, {login, message})) {
-            Send(sock, "Can't send message: " + message + " to " + recipient);
+            LOG_WARNING() << "Can't send message: " << message << " to " << recipient;
         }
     }
 }
@@ -97,16 +106,20 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
 std::pair<std::string, std::string> RecieveAuthData(userver::engine::io::Socket& sock) {
     std::array<char, 1024> buf; // NOLINT(cppcoreguidelines-pro-type-member-init)
 
+    LOG_DEBUG() << "RecieveAuthData(): Trying to read from socket";
+
     if (!engine::current_task::ShouldCancel()) {
         const auto read_bytes = sock.ReadSome(buf.data(), buf.size(), {});
 
         if (!read_bytes) {
-            LOG_INFO() << "Failed to read data";
+            LOG_WARNING() << "RecieveAuthData(): Failed to read auth data";
             return {};
         }
 
+        LOG_DEBUG() << "RecieveAuthData(): Successfully read from socket, auth data: " << read_bytes;
+
         auto [recipient, token] = ParseAuthData(buf.data());
-        LOG_DEBUG() << "Get Auth data. Recipient: " << recipient << "; Token: " << token;
+        LOG_DEBUG() << "RecieveAuthData(): Parse Auth Data. Result{Recipient: " << recipient << "; Token: " << token <<"}";
 
         return {recipient, token};
     }
@@ -151,26 +164,28 @@ void SocketManager::ProcessSocket(engine::io::Socket&& sock) {
     span.AddTag("fd", std::to_string(sock.Fd()));
 
     auto [login, token] = RecieveAuthData(sock);
+    LOG_INFO() << "ProcessSocket(): Get Auth Data{" <<"Login: " << login << "; Token: " << token << "}";
 
     if (login.empty() || token.empty() || !chat_.Verify()) {
-        Send(sock, "Socket manager: Wrong token or protocol");
+        LOG_WARNING() << "ProcessSocket(): Token or Login is empty, or wrong token";
         return;
     }
 
-    LOG_DEBUG() << "Login: " << login << " Token: " << token;
 
     auto queue = chat_.Register(login);
 
     if (!queue) {
-        Send(sock, "Socket manager: User with this token already has an active session");
+        LOG_WARNING() << "ProcessSocket(): User with this token already has an active session";
         return;
     }
 
     //todo вынести метрики в отдельный файли
-    LOG_DEBUG() << "Socket manager: Sending OK to client";
+    LOG_DEBUG() << "ProcessSocket(): Sending OK to client";
     chat_.Send(login, {"Server", "OK"});
 
     auto send_task = utils::Async("send", DoSend, std::ref(sock), login, queue->GetConsumer());
+    LOG_DEBUG() << "ProcessSocket(): Chat is ready, start DoRecv";
+
     DoRecv(sock, login, chat_, stats_);
 }
 } // namespace bifrost

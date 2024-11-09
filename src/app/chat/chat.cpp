@@ -9,7 +9,6 @@ bool Chat::Verify() {
 }
 
 bool Chat::Send(const Login& recipient, Message message) {
-    LOG_DEBUG() << "Send from " << message.sender.login << " to " << recipient;
     return registry_.Send(recipient, std::move(message));
 }
 
