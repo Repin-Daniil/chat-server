@@ -12,7 +12,7 @@ std::pair<std::string, std::string> ParseAuthData(std::string message) {
     auto at = message.find('@');
     auto delimiter = message.find("\r\n\r\n");
 
-    if (at == std::string::npos || delimiter == std::string::npos) {
+    if (at == std::string::npos || delimiter == std::string::npos ||| at > delimiter) {
         return {};
     }
 
@@ -26,7 +26,7 @@ std::pair<std::string, std::string> ParseMessage(std::string text) {
     auto at = text.find('@');
     auto delimiter = text.find("\r\n\r\n");
 
-    if (at == std::string::npos || delimiter == std::string::npos) {
+    if (at == std::string::npos || delimiter == std::string::npos || at > delimiter) {
         return {};
     }
 
