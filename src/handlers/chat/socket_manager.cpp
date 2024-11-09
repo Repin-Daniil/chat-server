@@ -10,34 +10,34 @@ struct Stats {
 namespace {
 std::pair<std::string, std::string> ParseAuthData(std::string message) {
     auto at = message.find('@');
-    const std::size_t deilimiter_size = 4;
-//
-//    if (at == std::string::npos || at == 0 || at >= message.length() - deilimiter_size) {
-//        return {};
-//    }
+    const std::size_t delimiter_size = 4; // размер "\r\n\r\n"
+
+    if (message.find('@') == std::string::npos ||  at >= message.length() - delimiter_size || message.find("\r\n\r\n") == std::string::npos || message.at(0) == '@' || message.at(message.find('@') + 1) == '\r') {
+        throw std::runtime_error("Invalid message");
+    }
 
     std::string user = message.substr(0, at);
-    std::string token = message.substr(at + 1, message.length() - at - deilimiter_size);
+    std::string token = message.substr(at + 1, message.length() - at - delimiter_size - 1);
 
     return {user, token};
 }
 
 std::pair<std::string, std::string> ParseMessage(std::string text) {
-    auto at = text.find('@');
-    const std::size_t deilimiter_size = 4;
-//
-//    if (at == std::string::npos || at == 0 || at >= text.length() - deilimiter_size) {
-//        return {};
-//    }
+ auto at = message.find('@');
+    const std::size_t delimiter_size = 4;
 
-    auto login = text.substr(0, at);
-    auto message = text.substr(at + 1, text.length() - at - deilimiter_size);
+    if (at == std::string::npos || at == 0 || at >= message.length() - delimiter_size || message.find("\r\n\r\n") == std::string::npos || message.at(0) == '@' || message.at(message.find('@') + 1) == '\r') {
+        throw std::runtime_error("Invalid message");
+    }
 
-    return {login, message};
+    std::string login = message.substr(0, at);
+    std::string message_content = message.substr(at + 1, message.length() - at - delimiter_size - 1);
+
+    return {login, message_content};
 }
 
 std::string SerializeMessage(app::Message msg) {
-    return msg.sender.login + "@" + msg.text;
+    return msg.sender.login + "@" + msg.text + "\r\n\r\n";
 }
 
 bool Send(userver::engine::io::Socket& sock, std::string message) {
