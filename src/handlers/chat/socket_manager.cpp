@@ -75,6 +75,7 @@ void DoSend(userver::engine::io::Socket& sock, std::string login, app::Queue::Co
 
 void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& chat, Stats& stats) {
     std::array<char, 1024> buf; // NOLINT(cppcoreguidelines-pro-type-member-init)
+    std::string current_data;
 
     while (!engine::current_task::ShouldCancel()) {
         const auto read_bytes = sock.ReadAll(buf.data(), buf.size(), {});
@@ -87,8 +88,16 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
         stats.bytes_read += read_bytes;
 
         LOG_DEBUG() << "DoRecv(): Get new message. Buffer: " << buf.data();
-        auto [recipient, message] = ParseMessage(buf.data());
+        current_data += buf.data();
+
+        if (current_data.find("\r\n\r\n") == std::string::npos) {
+            continue;
+        }
+
+        auto [recipient, message] = ParseMessage(current_data);
         LOG_DEBUG() << "DoRecv(): Parse message: {Recipient: " << recipient << "; Message: " << message << "}";
+
+        current_data.clear();
 
         if (message.empty() || recipient.empty()) {
             LOG_WARNING() << "Empty message or recipient!";
