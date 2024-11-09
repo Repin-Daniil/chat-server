@@ -12,7 +12,7 @@ std::pair<std::string, std::string> ParseAuthData(std::string message) {
     auto at = message.find('@');
     auto delimiter = message.find("\r\n\r\n");
 
-    if (at == std::string::npos || delimiter == std::string::npos ||| at > delimiter) {
+    if (at == std::string::npos || delimiter == std::string::npos || at > delimiter) {
         return {};
     }
 
@@ -168,7 +168,7 @@ void SocketManager::ProcessSocket(engine::io::Socket&& sock) {
 
     //todo вынести метрики в отдельный файли
     LOG_DEBUG() << "Socket manager: Sending OK to client";
-    chat_.Send(login, {"Server", "OK\r\n\r\n"});
+    chat_.Send(login, {"Server", "OK"});
 
     auto send_task = utils::Async("send", DoSend, std::ref(sock), login, queue->GetConsumer());
     DoRecv(sock, login, chat_, stats_);
