@@ -78,6 +78,8 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
     std::string current_data;
 
     while (!engine::current_task::ShouldCancel()) {
+        std::fill(buf.begin(), buf.end(), 0);
+
         const auto read_bytes = sock.ReadSome(buf.data(), buf.size(), {});
 
         if (!read_bytes) {
