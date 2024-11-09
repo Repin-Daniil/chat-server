@@ -12,8 +12,8 @@ std::pair<std::string, std::string> ParseAuthData(std::string message) {
     auto at = message.find('@');
     auto delimiter = message.find("\r\n\r\n");
 
-    if (at == std::string::npos || delimiter == std::string::npos || message.at(0) == '@' || message.at(at + 1) == '\r') {
-        throw std::runtime_error("Invalid message");
+    if (at == std::string::npos || delimiter == std::string::npos) {
+        return {};
     }
 
     std::string user = message.substr(0, at);
@@ -26,8 +26,8 @@ std::pair<std::string, std::string> ParseMessage(std::string text) {
     auto at = text.find('@');
     auto delimiter = text.find("\r\n\r\n");
 
-    if (at == std::string::npos || at == 0 ||delimiter == std::string::npos || text.at(0) == '@' || text.at(at + 1) == '\r') {
-        throw std::runtime_error("Invalid message");
+    if (at == std::string::npos || delimiter == std::string::npos) {
+        return {};
     }
 
     std::string login = text.substr(0, at);
