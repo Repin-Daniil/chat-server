@@ -9,4 +9,4 @@ stand-alone: true
 server-port: 8080
 chat-port: 8081
 
-dbconnection: 'postgresql://testsuite@localhost:15433/bifrost_db_1'
+dbconnection: 'postgresql://bifrost_user:bifrost54@45.8.147.142:30432/bifrost_db_1'

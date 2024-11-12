@@ -5,15 +5,15 @@
 
 namespace {
 const userver::storages::postgres::Query kInsertUser{
-    "WITH generated_salt AS (SELECT gen_salt('bf') AS salt) INSERT INTO users (login, password, salt) SELECT $1, crypt($2, salt) salt FROM generated_salt;",
+    "WITH generated_salt AS (SELECT gen_salt('bf') AS salt) INSERT INTO bifrost.users (login, password, salt) SELECT $1, crypt($2, salt), salt FROM generated_salt;",
     userver::storages::postgres::Query::Name{"insert_user"}
 };
 const userver::storages::postgres::Query kFindUser{
-    "SELECT id FROM users  WHERE login = $1;",
+    "SELECT id FROM bifrost.users  WHERE login = $1;",
     userver::storages::postgres::Query::Name{"update_game_session"}};
 
 const userver::storages::postgres::Query kCheckPassword{
-    "SELECT id FROM users  WHERE login = $1 AND password = crypt($2, salt);",
+    "SELECT id FROM bifrost.users  WHERE login = $1 AND password = crypt($2, salt);",
     userver::storages::postgres::Query::Name{"update_game_session"}};
 } // namespace
 
@@ -24,14 +24,14 @@ AuthManager::AuthManager(userver::storages::postgres::ClusterPtr pg_cluster) : p
 Token AuthManager::AuthenticateUser(const std::string& login, const std::string& password) {
     // Проверить действительно ли этому пользователлю соответствует такой пароль
 
-     auto result_insert = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kMaster, kFindUser, login, password);
+     auto result_insert = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kMaster, kFindUser, login);
 
-    if (result_insert.FieldCount() == 0) {
-        pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kMaster, kInsertUser, login);
+    if (result_insert.IsEmpty()) {
+        pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kMaster, kInsertUser, login, password);
     } else {
         auto check_result = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kMaster, kCheckPassword, login, password);
 
-        if (check_result.FieldCount() == 0) {
+        if (check_result.IsEmpty()) {
             return {};
         }
     }
