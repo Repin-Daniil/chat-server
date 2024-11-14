@@ -8,4 +8,4 @@ stand-alone: true
 is-testing: false
 
 server-port: 8080
-chat-port: 8081
+chat-port: 8181

@@ -1,13 +1,13 @@
 #pragma once
+
 #include "userver/components/component_base.hpp"
 #include <userver/components/component_context.hpp>
 #include "userver/components/component_list.hpp"
 
-#include "chat/chat.h"
+#include "chat/chat.hpp"
 
 namespace bifrost::app {
-
-class Application : public userver::components::LoggableComponentBase {
+class Application final : public userver::components::LoggableComponentBase {
 public:
     static constexpr std::string_view kName = "application";
 
@@ -16,10 +16,7 @@ public:
 
     Chat& GetApp();
 
-    ~Application() override = default;
-
 private:
     Chat chat_;
 };
-
 }

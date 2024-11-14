@@ -1,5 +1,5 @@
 #pragma once
-#include "app/registry/stand_alone/receiver.h"
+#include "app/registry/stand_alone/receiver.hpp"
 
 namespace bifrost::app::registry {
 class SingleReceiver : public Receiver {
@@ -8,7 +8,7 @@ public:
 
     bool Send(Message message) override;
 
-    ~SingleReceiver();
+    ~SingleReceiver() override;
 
 private:
     std::string id_;

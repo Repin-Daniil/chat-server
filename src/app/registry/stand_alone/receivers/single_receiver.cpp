@@ -1,4 +1,4 @@
-#include "single_receiver.h"
+#include "single_receiver.hpp"
 
 #include "userver/logging/log.hpp"
 

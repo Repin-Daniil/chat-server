@@ -8,19 +8,19 @@
 #include "userver/components/minimal_server_component_list.hpp"
 #include "userver/server/handlers/http_handler_base.hpp"
 
-#include "app/application_component.h"
+#include "app/application_component.hpp"
 
 namespace bifrost::handlers::auth {
 
 using namespace std::literals;
 
-class AuthRegistrationHandler final : public userver::server::handlers::HttpHandlerBase {
+class AuthHandler final : public userver::server::handlers::HttpHandlerBase {
 public:
-    static constexpr std::string_view kName = "handler-auth-registration"sv;
+    static constexpr std::string_view kName = "handler-auth"sv;
 
     using HttpHandlerBase::HttpHandlerBase;
 
-    AuthRegistrationHandler(const userver::components::ComponentConfig& config,
+    AuthHandler(const userver::components::ComponentConfig& config,
                        const userver::components::ComponentContext& context);
 
     std::string HandleRequestThrow(const userver::server::http::HttpRequest& request,

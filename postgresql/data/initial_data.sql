@@ -1,10 +1,9 @@
-WITH generated_salt AS (
-    SELECT gen_salt('bf') AS salt
-)
+WITH generated_salt AS (SELECT gen_salt('bf') AS salt)
 
-INSERT INTO users (login, password, salt)
-SELECT
-    'Ivan',  -- Логин
-    crypt('ivan_password', salt),  -- Хеш пароля с солью
-    salt  -- Соль
+INSERT INTO bifrost.users (login, password, salt)
+SELECT 'Ivan', crypt('ivan_password', salt), salt
+FROM generated_salt;
+
+INSERT INTO bifrost.users (login, password, salt)
+SELECT 'Daniil', crypt('strong_password', salt), salt
 FROM generated_salt;

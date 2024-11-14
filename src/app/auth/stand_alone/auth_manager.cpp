@@ -1,58 +1,66 @@
-#include "auth_manager.h"
+#include "auth_manager.hpp"
 
 #include "userver/storages/postgres/cluster.hpp"
 #include "userver/storages/postgres/cluster_types.hpp"
-
-namespace {
-const userver::storages::postgres::Query kInsertUser{
-    "WITH generated_salt AS (SELECT gen_salt('bf') AS salt) INSERT INTO bifrost.users (login, password, salt) SELECT $1, crypt($2, salt), salt FROM generated_salt;",
-    userver::storages::postgres::Query::Name{"insert_user"}
-};
-const userver::storages::postgres::Query kFindUser{
-    "SELECT id FROM bifrost.users  WHERE login = $1;",
-    userver::storages::postgres::Query::Name{"update_game_session"}};
-
-const userver::storages::postgres::Query kCheckPassword{
-    "SELECT id FROM bifrost.users  WHERE login = $1 AND password = crypt($2, salt);",
-    userver::storages::postgres::Query::Name{"update_game_session"}};
-} // namespace
+#include "db/sql.hpp"
 
 namespace bifrost::app::auth {
-AuthManager::AuthManager(userver::storages::postgres::ClusterPtr pg_cluster) : pg_cluster_(pg_cluster) {
+AuthManager::AuthManager(userver::storages::postgres::ClusterPtr pg_cluster) : pg_cluster_(std::move(pg_cluster)) {
 }
 
-Token AuthManager::AuthenticateUser(const std::string& login, const std::string& password) {
-    // Проверить действительно ли этому пользователлю соответствует такой пароль
+std::pair<Token, bool> AuthManager::AuthenticateUser(std::string_view login, std::string_view password) {
+    bool is_new_user = false;
 
-     auto result_insert = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kMaster, kFindUser, login);
+    try {
+        is_new_user = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kSlave,
+                                           sql::kFindUser,
+                                           login).IsEmpty();
 
-    if (result_insert.IsEmpty()) {
-        pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kMaster, kInsertUser, login, password);
-    } else {
-        auto check_result = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kMaster, kCheckPassword, login, password);
+        if (is_new_user) {
+            pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kMaster,
+                                 sql::kInsertUser,
+                                 login,
+                                 password);
+            LOG_INFO() << "Register new user " << login;
+        } else {
+            auto check_pwd_result = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kSlave,
+                                                         sql::kCheckPassword,
+                                                         login,
+                                                         password);
 
-        if (check_result.IsEmpty()) {
-            return {};
+            if (check_pwd_result.IsEmpty()) {
+                LOG_DEBUG() << "User " << login << "entered wrong password";
+
+                return {};
+            }
         }
+    } catch (const std::exception& ex) {
+        LOG_ERROR() << "Something go wrong with DB, user " << login << " not confirmed. Exception: " << ex;
     }
 
-    auto token = generator_.GenerateNewToken();
+    LOG_INFO() << "Authenticate user " << login;
 
-    //Нужна Бимапа, чтобы одному пользователю соответствовал один токен
-
-    bool is_token_unique = false;
-
-    do {
-        auto [auth_data, flag] = token_map_.TryEmplace(token, login);
-        is_token_unique = flag;
-    } while (!is_token_unique);
-
-    return token;
+    return {IssueToken(login), is_new_user};
 }
 
-bool AuthManager::VerifyToken(const std::string& login, const Token& token) {
-    auto ptr = token_map_.Get(token);
+bool AuthManager::VerifyToken(std::string_view login, const Token& token) {
+    auto ptr = token_map_.Get(token.data());
 
     return ptr && (*ptr == login);
+}
+
+
+Token AuthManager::IssueToken(std::string_view login) {
+    Token token;
+
+    //TODO Проверять если уже был выпущен токен и он не expired, то его аннулируем и удаляем и делаем новый
+
+    do {
+        token = generator_.GenerateNewToken();
+        auto [auth_data, is_inserted] = token_map_.TryEmplace(token, login.data());
+        token = (is_inserted ? token : ""); //FIXME проверить!
+    } while (token.empty());
+
+    return token;
 }
 }

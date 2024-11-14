@@ -8,7 +8,7 @@ using Login = std::string;
 struct User {
    Login login;
 };
-//TODO переместить в чат
+//TODO переместить в чат или в dto
 struct Message {
     User sender;
     std::string text;

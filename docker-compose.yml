@@ -29,7 +29,7 @@ services:
       - ${TC_CORES_DIR:-./.cores}:/cores:rw
     ports:
       - 8080:8080
-      - 8085:8081
+      - 8181:8181
     working_dir: /bifrost
     entrypoint:
       - ./tests/run_as_user.sh

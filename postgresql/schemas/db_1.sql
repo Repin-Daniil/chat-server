@@ -1,13 +1,13 @@
 DROP SCHEMA IF EXISTS bifrost CASCADE;
 
-
 CREATE SCHEMA IF NOT EXISTS bifrost;
 
 CREATE EXTENSION pgcrypto;
+
 CREATE TABLE IF NOT EXISTS bifrost.users (
     id SERIAL PRIMARY KEY,
     login varchar(100),
-    password text,
+    password varchar(100),
     salt text,
     registered timestamp DEFAULT(now())
 );

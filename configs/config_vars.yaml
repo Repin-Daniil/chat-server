@@ -8,6 +8,7 @@ stand-alone: true
 is-testing: false
 
 server-port: 8080
-chat-port: 8081
+chat-port: 8181
 
-dbconnection: 'postgresql://bifrost_user:password@localhost:5432/bifrost_db_1'
+#dbconnection: 'postgresql://bifrost_user:password@localhost:5432/bifrost_db_1'
+dbconnection: 'postgresql://user:password@localhost:5432/bifrost_db_1'

@@ -1,10 +1,10 @@
-#include "chat.h"
+#include "chat.hpp"
 
 namespace bifrost::app {
 Chat::Chat(auth::AuthManager& auth, registry::UserRegistry& registry) : auth_(auth), registry_(registry) {
 }
 
-auth::Token Chat::AuthenticateUser(const Login& login, const std::string& password) {
+std::pair<auth::Token, bool> Chat::AuthenticateUser(const Login& login, const std::string& password) {
     return auth_.AuthenticateUser(login, password);
 }
 
