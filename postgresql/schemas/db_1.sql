@@ -11,3 +11,5 @@ CREATE TABLE IF NOT EXISTS bifrost.users (
     salt text,
     registered timestamp DEFAULT(now())
 );
+
+CREATE INDEX user_login_idx on bifrost.users using HASH(login);

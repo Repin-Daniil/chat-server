@@ -5,7 +5,7 @@ namespace bifrost::app::registry {
 class SingleReceiver : public Receiver {
 public:
     SingleReceiver(std::shared_ptr<Queue> queue, std::string id);
-
+    std::shared_ptr<Queue> GetQueue() override;
     bool Send(Message message) override;
 
     ~SingleReceiver() override;

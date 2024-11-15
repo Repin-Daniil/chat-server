@@ -9,7 +9,7 @@ AuthHandler::AuthHandler(const userver::components::ComponentConfig& config,
 std::string AuthHandler::HandleRequestThrow(const userver::server::http::HttpRequest& request,
                                             userver::server::request::RequestContext& request_context) const {
     const auto& name = request.GetArg("name");
-    const auto& password = request.GetArg("password");
+    const auto& password = request.RequestBody(); //FIXME протестировать
 
     if (name.empty() || password.empty()) {
         request.SetResponseStatus(userver::server::http::HttpStatus::kBadRequest);

@@ -17,6 +17,9 @@ bool SingleReceiver::Send(Message message) {
 
     return true;
 }
+std::shared_ptr<Queue> SingleReceiver::GetQueue() {
+return queue_;
+}
 
 SingleReceiver::~SingleReceiver() {
     // LOG_DEBUG() << "Destruct SingleReceiver " << id_;

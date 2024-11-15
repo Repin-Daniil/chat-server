@@ -17,9 +17,9 @@ namespace {
 
 void DoSend(userver::engine::io::Socket& sock, std::string login, app::Queue::Consumer consumer) {
     app::Message message;
-    while (consumer.Pop(message)) {
+    while (!userver::engine::current_task::ShouldCancel() && consumer.Pop(message)) {
         std::string data = utils::SerializeMessage(message);
-        LOG_TRACE() << "DoSend(): Send Message " << data << " from " << message.sender.login;
+        LOG_DEBUG() << "DoSend(): Send Message " << data << " from " << message.sender.login;
 
         const auto sent_bytes = sock.SendAll(data.data(), data.size(), {});
 
@@ -28,13 +28,13 @@ void DoSend(userver::engine::io::Socket& sock, std::string login, app::Queue::Co
             return;
         }
 
-        LOG_TRACE() << "DoSend(): Successfully send message from " << message.sender.login << " to " << login;
+        LOG_DEBUG() << "DoSend(): Successfully send message from " << message.sender.login << " to " << login;
     }
 }
 
 void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& chat, utils::Stats& stats) {
     std::array<char, 1024> buf; // NOLINT(cppcoreguidelines-pro-type-member-init)
-    std::string current_data;
+    std::stringstream data;
 
     while (!userver::engine::current_task::ShouldCancel()) {
         std::fill(buf.begin(), buf.end(), 0);
@@ -48,24 +48,24 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
 
         stats.bytes_read += read_bytes;
 
-        LOG_TRACE() << "DoRecv(): Get new message. Buffer: " << buf.data();
-        current_data += {buf.data(), read_bytes};
+        LOG_DEBUG() << "DoRecv(): Get new message. Buffer: " << buf.data();
 
-        if (current_data.find("\r\n\r\n") == std::string::npos) {
+        data << std::string{buf.data(), read_bytes};
+
+        if (std::string_view(buf.data(), read_bytes).find("\r\n\r\n") == std::string::npos) { //FIXME Протестировать
             continue;
         }
 
-        auto [recipient, message] = utils::ParseMessage(current_data);
-        LOG_TRACE() << "DoRecv(): Parse message: {Recipient: " << recipient << "; Message: " << message << "}";
-
-        current_data.clear();
+        auto [recipient, message] = utils::ParseMessage(data.str());
+        data.str("");
+        LOG_DEBUG() << "DoRecv(): Parse message: {Recipient: " << recipient << "; Message: " << message << "}";
 
         if (message.empty() || recipient.empty()) {
             LOG_WARNING() << "Empty message or recipient!";
             continue;
         }
 
-        LOG_TRACE() << "Start sending message from" << login << " to " << recipient;
+        LOG_DEBUG() << "Start sending message from" << login << " to " << recipient;
 
         if (!chat.Send(recipient, {login, message})) {
             LOG_WARNING() << "Can't send message: " << message << " to " << recipient;
@@ -76,7 +76,7 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
 std::pair<std::string, std::string> RecieveAuthData(userver::engine::io::Socket& sock) {
     std::array<char, 1024> buf; // NOLINT(cppcoreguidelines-pro-type-member-init)
 
-    LOG_TRACE() << "RecieveAuthData(): Trying to read from socket";
+    LOG_DEBUG() << "RecieveAuthData(): Trying to read from socket";
 
     if (!userver::engine::current_task::ShouldCancel()) {
         const auto read_bytes = sock.ReadSome(buf.data(), buf.size(), {});
@@ -86,10 +86,10 @@ std::pair<std::string, std::string> RecieveAuthData(userver::engine::io::Socket&
             return {};
         }
 
-        LOG_TRACE() << "RecieveAuthData(): Successfully read from socket, auth data: " << buf.data();
+        LOG_DEBUG() << "RecieveAuthData(): Successfully read from socket, auth data: " << buf.data();
 
         auto [recipient, token] = utils::ParseAuthData(buf.data());
-        LOG_TRACE() << "RecieveAuthData(): Parse Auth Data. Result{Recipient: " << recipient << "; Token: " << token <<"}";
+        LOG_DEBUG() << "RecieveAuthData(): Parse Auth Data. Result{Recipient: " << recipient << "; Token: " << token <<"}";
 
         return {recipient, token};
     }
@@ -107,11 +107,11 @@ SocketManager::SocketManager(const userver::components::ComponentConfig& config,
 
 void SocketManager::ProcessSocket(userver::engine::io::Socket&& sock) {
     const auto sock_num = ++stats_.opened_sockets;
-    LOG_TRACE() << "New socket: " << stats_.opened_sockets;
+    LOG_DEBUG() << "New socket: " << stats_.opened_sockets;
 
     userver::utils::FastScopeGuard guard{
         [this, sock_num]() noexcept {
-            LOG_TRACE() << "Close socket: " << sock_num;
+            LOG_DEBUG() << "Close socket: " << sock_num;
             ++stats_.closed_sockets;
         }
     };
@@ -134,14 +134,15 @@ void SocketManager::ProcessSocket(userver::engine::io::Socket&& sock) {
         LOG_WARNING() << "ProcessSocket(): User with this token already has an active session";
         return;
     }
-
-    LOG_TRACE() << "ProcessSocket(): Sending OK to client";
+//TODO нужно чтобы, когда появлялся еще один человек, который ввел правльный пароль и появился новый токен, старый инвалидировался, а человека выкидывали
+    LOG_DEBUG() << "ProcessSocket(): Sending OK to client";
     chat_.Send(login, {"Server", "OK"});
 
     auto send_task = userver::utils::Async("send", DoSend, std::ref(sock), login, queue->GetConsumer());
-    LOG_TRACE() << "ProcessSocket(): Chat is ready, start DoRecv";
+    LOG_DEBUG() << "ProcessSocket(): Chat is ready, start DoRecv";
 
     DoRecv(sock, login, chat_, stats_);
+    send_task.RequestCancel();
 }
 
-} // namespace bifrost
+}

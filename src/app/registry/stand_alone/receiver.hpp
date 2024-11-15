@@ -24,7 +24,7 @@ namespace registry {
 class Receiver {
 public:
     virtual bool Send(Message message) = 0;
-
+    virtual std::shared_ptr<Queue> GetQueue() = 0;
     //TODO Destruct(), Flush()??? Добавить какие-нибудь операции для работы с очередью; МБ гет продьюсер, г
 
     virtual ~Receiver() = default;
