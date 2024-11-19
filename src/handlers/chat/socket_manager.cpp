@@ -17,7 +17,7 @@ namespace {
 
 void DoSend(userver::engine::io::Socket& sock, std::string login, app::Queue::Consumer consumer) {
     app::Message message;
-    while (!userver::engine::current_task::ShouldCancel() && consumer.Pop(message)) {
+    while (!userver::engine::current_task::IsCancelRequested() && consumer.Pop(message)) {
         std::string data = utils::SerializeMessage(message);
         LOG_DEBUG() << "DoSend(): Send Message " << data << " from " << message.sender.login;
 
@@ -135,12 +135,13 @@ void SocketManager::ProcessSocket(userver::engine::io::Socket&& sock) {
         return;
     }
 //TODO нужно чтобы, когда появлялся еще один человек, который ввел правльный пароль и появился новый токен, старый инвалидировался, а человека выкидывали
-    LOG_DEBUG() << "ProcessSocket(): Sending OK to client";
-    chat_.Send(login, {"Server", "OK"});
+
 
     auto send_task = userver::utils::Async("send", DoSend, std::ref(sock), login, queue->GetConsumer());
     LOG_DEBUG() << "ProcessSocket(): Chat is ready, start DoRecv";
 
+    LOG_DEBUG() << "ProcessSocket(): Sending OK to client";
+    chat_.Send(login, {"Server", "OK"});
     DoRecv(sock, login, chat_, stats_);
     send_task.RequestCancel();
 }
