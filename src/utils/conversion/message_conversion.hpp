@@ -4,11 +4,16 @@
 #include "userver/logging/log.hpp"
 
 namespace chat::utils {
+
 std::pair<std::string, std::string> ParseAuthData(std::string message) {
     LOG_DEBUG() << "ParseAuthData() Text: " << message;
 
     auto at = message.find('@');
     auto delimiter = message.find("\r\n\r\n");
+
+    if (delimiter == std::string::npos) {
+        delimiter = message.find("\\r\\n\\r\\n");  // Если первый вариант не найден, ищем второй
+    }
 
     if (at == std::string::npos || delimiter == std::string::npos || at > delimiter) {
         return {};
@@ -26,6 +31,10 @@ std::pair<std::string, std::string> ParseMessage(std::string text) {
     auto at = text.find('@');
     auto delimiter = text.find("\r\n\r\n");
 
+    if (delimiter == std::string::npos) {
+        delimiter = text.find("\\r\\n\\r\\n");  // Если первый вариант не найден, ищем второй
+    }
+
     if (at == std::string::npos || delimiter == std::string::npos || at > delimiter) {
         return {};
     }
@@ -37,4 +46,5 @@ std::pair<std::string, std::string> ParseMessage(std::string text) {
 }
 
 std::string SerializeMessage(app::Message msg) { return msg.sender.login + "@" + msg.text + "\r\n\r\n"; }
+
 }  // namespace chat::utils

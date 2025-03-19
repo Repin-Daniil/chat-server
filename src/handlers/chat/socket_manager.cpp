@@ -52,7 +52,8 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
 
         data << std::string{buf.data(), read_bytes};
 
-        if (std::string_view(buf.data(), read_bytes).find("\r\n\r\n") == std::string::npos) {  // FIXME Протестировать
+        if (std::string_view(buf.data(), read_bytes).find("\\r\\n\\r\\n") == std::string::npos &&
+            std::string_view(buf.data(), read_bytes).find("\r\n\r\n") == std::string::npos) {
             continue;
         }
 
