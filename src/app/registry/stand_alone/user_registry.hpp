@@ -5,7 +5,7 @@
 
 #include "receiver.hpp"
 
-namespace bifrost::app::registry {
+namespace chat::app::registry {
 
 class UserRegistry {
 public:
@@ -21,4 +21,4 @@ private:
     userver::rcu::RcuMap<Login, Receiver> login_to_receiver_;
     // TODO redis cluster
 };
-}  // namespace bifrost::app::registry
+}  // namespace chat::app::registry

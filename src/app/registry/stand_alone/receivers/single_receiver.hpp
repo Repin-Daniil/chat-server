@@ -1,7 +1,7 @@
 #pragma once
 #include "app/registry/stand_alone/receiver.hpp"
 
-namespace bifrost::app::registry {
+namespace chat::app::registry {
 class SingleReceiver : public Receiver {
 public:
     SingleReceiver(std::shared_ptr<Queue> queue, std::string id);
@@ -15,4 +15,4 @@ private:
     std::shared_ptr<Queue> queue_;
     Queue::MultiProducer producer_;
 };
-}  // namespace bifrost::app::registry
+}  // namespace chat::app::registry

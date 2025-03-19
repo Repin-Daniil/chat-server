@@ -1,10 +1,10 @@
-DROP SCHEMA IF EXISTS bifrost CASCADE;
+DROP SCHEMA IF EXISTS chat CASCADE;
 
-CREATE SCHEMA IF NOT EXISTS bifrost;
+CREATE SCHEMA IF NOT EXISTS chat;
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA bifrost;
+CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA chat;
 
-CREATE TABLE IF NOT EXISTS bifrost.users (
+CREATE TABLE IF NOT EXISTS chat.users (
                                              id         SERIAL PRIMARY KEY,
                                              login      TEXT        NOT NULL
                                                  CONSTRAINT chk_login_length CHECK (LENGTH(login) BETWEEN 1 AND 100),
@@ -14,6 +14,6 @@ CREATE TABLE IF NOT EXISTS bifrost.users (
                                              registered TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-ALTER TABLE bifrost.users ADD CONSTRAINT unique_login UNIQUE (login);
+ALTER TABLE chat.users ADD CONSTRAINT unique_login UNIQUE (login);
 
-CREATE UNIQUE INDEX IF NOT EXISTS user_login_idx ON bifrost.users (login);
+CREATE UNIQUE INDEX IF NOT EXISTS user_login_idx ON chat.users (login);

@@ -3,7 +3,7 @@
 #include "userver/storages/postgres/postgres_fwd.hpp"
 #include "utils/token/token.hpp"
 
-namespace bifrost::app::auth {
+namespace chat::app::auth {
 
 using Token = std::string;
 
@@ -24,4 +24,4 @@ private:
 
     Token IssueToken(std::string_view login);
 };
-}  // namespace bifrost::app::auth
+}  // namespace chat::app::auth

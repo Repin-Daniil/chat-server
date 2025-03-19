@@ -1,6 +1,6 @@
 #include "socket_metrics.hpp"
 
-namespace bifrost::utils {
+namespace chat::utils {
 void DumpMetric(userver::utils::statistics::Writer& writer, const Stats& stats) {
     writer["sockets"]["opened"] = stats.opened_sockets;
     writer["sockets"]["closed"] = stats.closed_sockets;
@@ -12,4 +12,4 @@ void ResetMetric(Stats& stats) {
     stats.closed_sockets = 0;
     stats.bytes_read = 0;
 }
-}  // namespace bifrost::utils
+}  // namespace chat::utils

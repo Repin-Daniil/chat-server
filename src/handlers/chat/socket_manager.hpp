@@ -9,7 +9,7 @@
 
 #include "app/application_component.hpp"
 
-namespace bifrost::handlers::chat {
+namespace chat::handlers::chat {
 struct Stats;
 
 class SocketManager final : public userver::components::TcpAcceptorBase {
@@ -27,4 +27,4 @@ private:
     app::Chat& chat_;
     utils::Stats& stats_;
 };
-}  // namespace bifrost::handlers::chat
+}  // namespace chat::handlers::chat

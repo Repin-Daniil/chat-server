@@ -1,6 +1,6 @@
 #include "auth_handler.hpp"
 
-namespace bifrost::handlers::auth {
+namespace chat::handlers::auth {
 AuthHandler::AuthHandler(
     const userver::components::ComponentConfig& config,
     const userver::components::ComponentContext& context
@@ -37,4 +37,4 @@ std::string AuthHandler::HandleRequestThrow(
 
     return token;
 }
-}  // namespace bifrost::handlers::auth
+}  // namespace chat::handlers::auth

@@ -3,7 +3,7 @@
 #include <userver/components/component.hpp>
 #include <userver/yaml_config/merge_schemas.hpp>
 
-namespace bifrost::app::registry {
+namespace chat::app::registry {
 
 RegistryComponent::RegistryComponent(
     const userver::components::ComponentConfig& config,
@@ -29,4 +29,4 @@ properties:
 }
 
 UserRegistry& RegistryComponent::GetRegistry() const { return *registry_; }
-}  // namespace bifrost::app::registry
+}  // namespace chat::app::registry

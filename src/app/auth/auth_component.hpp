@@ -5,7 +5,7 @@
 
 #include "stand_alone/auth_manager.hpp"
 
-namespace bifrost::app::auth {
+namespace chat::app::auth {
 class AuthComponent final : public userver::components::LoggableComponentBase {
 public:
     static constexpr std::string_view kName = "auth-manager";
@@ -22,4 +22,4 @@ public:
 private:
     std::unique_ptr<AuthManager> auth_manager_;
 };
-}  // namespace bifrost::app::auth
+}  // namespace chat::app::auth

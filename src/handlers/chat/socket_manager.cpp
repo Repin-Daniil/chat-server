@@ -9,7 +9,7 @@
 
 #include "utils/conversion/message_conversion.hpp"
 
-namespace bifrost::handlers::chat {
+namespace chat::handlers::chat {
 
 const userver::utils::statistics::MetricTag<utils::Stats> kSocketManagerTag{"socket-manager"};
 
@@ -147,4 +147,4 @@ void SocketManager::ProcessSocket(userver::engine::io::Socket&& sock) {
     send_task.RequestCancel();
 }
 
-}  // namespace bifrost::handlers::chat
+}  // namespace chat::handlers::chat

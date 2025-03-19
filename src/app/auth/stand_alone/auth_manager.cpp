@@ -4,7 +4,7 @@
 #include "userver/storages/postgres/cluster.hpp"
 #include "userver/storages/postgres/cluster_types.hpp"
 
-namespace bifrost::app::auth {
+namespace chat::app::auth {
 AuthManager::AuthManager(userver::storages::postgres::ClusterPtr pg_cluster) : pg_cluster_(std::move(pg_cluster)) {}
 
 std::pair<Token, bool> AuthManager::AuthenticateUser(std::string_view login, std::string_view password) {
@@ -58,4 +58,4 @@ Token AuthManager::IssueToken(std::string_view login) {
 
     return token;
 }
-}  // namespace bifrost::app::auth
+}  // namespace chat::app::auth

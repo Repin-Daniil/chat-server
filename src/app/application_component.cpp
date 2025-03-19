@@ -3,7 +3,7 @@
 #include "auth/auth_component.hpp"
 #include "registry/registry_component.hpp"
 
-namespace bifrost::app {
+namespace chat::app {
 Application::Application(
     const userver::components::ComponentConfig& config,
     const userver::components::ComponentContext& context
@@ -15,4 +15,4 @@ Application::Application(
       ) {}
 
 Chat& Application::GetApp() { return chat_; }
-}  // namespace bifrost::app
+}  // namespace chat::app

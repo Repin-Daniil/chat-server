@@ -10,7 +10,7 @@
 
 #include "app/application_component.hpp"
 
-namespace bifrost::handlers::auth {
+namespace chat::handlers::auth {
 
 using namespace std::literals;
 
@@ -34,4 +34,4 @@ private:
     app::Chat& chat_;
 };
 
-}  // namespace bifrost::handlers::auth
+}  // namespace chat::handlers::auth

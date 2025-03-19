@@ -73,7 +73,7 @@ components_manager:
       load-enabled: true
       stand-alone: $stand-alone
 
-    bifrost-database:
+    chat-database:
       dbconnection: $dbconnection
       dbconnection#env: DB_CONNECTION
       blocking_task_processor: fs-task-processor

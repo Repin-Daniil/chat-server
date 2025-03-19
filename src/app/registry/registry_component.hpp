@@ -4,7 +4,7 @@
 
 #include "stand_alone/user_registry.hpp"
 
-namespace bifrost::app::registry {
+namespace chat::app::registry {
 
 class RegistryComponent final : public userver::components::LoggableComponentBase {
 public:
@@ -23,4 +23,4 @@ private:
     std::unique_ptr<UserRegistry> registry_;
 };
 
-}  // namespace bifrost::app::registry
+}  // namespace chat::app::registry

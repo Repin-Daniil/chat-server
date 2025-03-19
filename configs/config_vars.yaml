@@ -10,4 +10,4 @@ is-testing: false
 server-port: 8080
 chat-port: 8181
 
-dbconnection: 'postgresql://chat-user:bifrost54@localhost:30432/bifrost_db_1'
+dbconnection: 'postgresql://chat-user:chat54@localhost:30432/chat_db_1'

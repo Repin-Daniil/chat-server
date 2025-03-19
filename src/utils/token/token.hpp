@@ -3,7 +3,7 @@
 #include <iomanip>
 #include <random>
 
-namespace bifrost::utils {
+namespace chat::utils {
 
 class TokenGenerator {
 public:
@@ -23,4 +23,4 @@ private:
     }()};
 };
 
-}  // namespace bifrost::utils
+}  // namespace chat::utils

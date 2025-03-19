@@ -4,7 +4,7 @@
 #include <userver/yaml_config/merge_schemas.hpp>
 #include "userver/storages/postgres/component.hpp"
 
-namespace bifrost::app::auth {
+namespace chat::app::auth {
 AuthComponent::AuthComponent(
     const userver::components::ComponentConfig& config,
     const userver::components::ComponentContext& context
@@ -12,7 +12,7 @@ AuthComponent::AuthComponent(
     : LoggableComponentBase(config, context) {
     if (config["stand-alone"].As<bool>()) {
         auth_manager_ = std::make_unique<AuthManager>(
-            context.FindComponent<userver::components::Postgres>("bifrost-database").GetCluster()
+            context.FindComponent<userver::components::Postgres>("chat-database").GetCluster()
         );
     } else {
     }
@@ -31,4 +31,4 @@ properties:
         description: stand-alone or replica set
 )");
 }
-}  // namespace bifrost::app::auth
+}  // namespace chat::app::auth

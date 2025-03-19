@@ -3,7 +3,7 @@
 #include <string>
 #include "userver/logging/log.hpp"
 
-namespace bifrost::utils {
+namespace chat::utils {
 std::pair<std::string, std::string> ParseAuthData(std::string message) {
     LOG_DEBUG() << "ParseAuthData() Text: " << message;
 
@@ -37,4 +37,4 @@ std::pair<std::string, std::string> ParseMessage(std::string text) {
 }
 
 std::string SerializeMessage(app::Message msg) { return msg.sender.login + "@" + msg.text + "\r\n\r\n"; }
-}  // namespace bifrost::utils
+}  // namespace chat::utils

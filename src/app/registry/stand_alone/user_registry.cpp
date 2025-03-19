@@ -2,7 +2,7 @@
 
 #include "receivers/single_receiver.hpp"
 
-namespace bifrost::app::registry {
+namespace chat::app::registry {
 std::shared_ptr<Queue> UserRegistry::AddReceiver(const Login& new_recipient) {
     auto queue = Queue::Create();
 
@@ -38,4 +38,4 @@ bool UserRegistry::Send(const Login& recipient, Message message) {
 
 std::size_t UserRegistry::GetApproxRegistrySize() const { return login_to_receiver_.SizeApprox(); }
 
-}  // namespace bifrost::app::registry
+}  // namespace chat::app::registry

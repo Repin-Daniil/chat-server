@@ -6,7 +6,7 @@
 
 #include "chat/chat.hpp"
 
-namespace bifrost::app {
+namespace chat::app {
 class Application final : public userver::components::LoggableComponentBase {
 public:
     static constexpr std::string_view kName = "application";
@@ -21,4 +21,4 @@ public:
 private:
     Chat chat_;
 };
-}  // namespace bifrost::app
+}  // namespace chat::app

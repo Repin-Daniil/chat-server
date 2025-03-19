@@ -2,7 +2,7 @@
 
 #include "userver/logging/log.hpp"
 
-namespace bifrost::app::registry {
+namespace chat::app::registry {
 SingleReceiver::SingleReceiver(std::shared_ptr<Queue> queue, std::string id)
     : id_(std::move(id)), queue_(std::move(queue)), producer_(queue_->GetMultiProducer()) {
     // LOG_DEBUG() << "Create SingleReceiver " << id_;
@@ -22,4 +22,4 @@ std::shared_ptr<Queue> SingleReceiver::GetQueue() { return queue_; }
 SingleReceiver::~SingleReceiver() {
     // LOG_DEBUG() << "Destruct SingleReceiver " << id_;
 }
-}  // namespace bifrost::app::registry
+}  // namespace chat::app::registry

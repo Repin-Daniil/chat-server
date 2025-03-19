@@ -1,7 +1,7 @@
 #pragma once
 #include "userver/concurrent/queue.hpp"
 
-namespace bifrost::app {
+namespace chat::app {
 
 using Login = std::string;
 
@@ -31,4 +31,4 @@ public:
 };
 
 }  // namespace registry
-}  // namespace bifrost::app
+}  // namespace chat::app

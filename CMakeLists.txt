@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(bifrost CXX)
+project(chat CXX)
 
 find_package(userver COMPONENTS core postgresql QUIET)
 

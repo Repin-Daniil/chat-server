@@ -3,7 +3,7 @@
 #include "app/auth/stand_alone/auth_manager.hpp"
 #include "app/registry/stand_alone/user_registry.hpp"
 
-namespace bifrost::app {
+namespace chat::app {
 class Chat {
 public:
     Chat(auth::AuthManager& auth, registry::UserRegistry& registry);
@@ -21,4 +21,4 @@ private:
     registry::UserRegistry& registry_;
     // TODO archive
 };
-}  // namespace bifrost::app
+}  // namespace chat::app

@@ -1,6 +1,6 @@
 #include "token.hpp"
 
-namespace bifrost::utils {
+namespace chat::utils {
 std::string TokenGenerator::GenerateNewToken() {
     std::stringstream ss;
 
@@ -12,4 +12,4 @@ std::string TokenGenerator::GenerateNewToken() {
 
     return ss.str();
 }
-}  // namespace bifrost::utils
+}  // namespace chat::utils
