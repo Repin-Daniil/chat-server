@@ -9,7 +9,7 @@ AuthManager::AuthManager(userver::storages::postgres::ClusterPtr pg_cluster) : p
 
 std::pair<Token, bool> AuthManager::AuthenticateUser(std::string_view login, std::string_view password) {
     bool is_new_user = false;
-    //TODO не давать регистрировать пользователя Server
+    // TODO не давать регистрировать пользователя Server
     try {
         is_new_user =
             pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kSlave, sql::kFindUser, login).IsEmpty();
