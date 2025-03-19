@@ -6,7 +6,7 @@ services:
     image: postgres:12
     environment: &db_env
       POSTGRES_DB: bifrost_db_1
-      POSTGRES_USER: user
+      POSTGRES_USER: chat-user
       POSTGRES_PASSWORD: password
     ports:
       - 5432
