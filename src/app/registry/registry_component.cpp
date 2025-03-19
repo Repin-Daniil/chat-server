@@ -5,16 +5,16 @@
 
 namespace bifrost::app::registry {
 
-RegistryComponent::RegistryComponent(const userver::components::ComponentConfig& config,
-                              const userver::components::ComponentContext& context) : LoggableComponentBase(config,
-        context) {
+RegistryComponent::RegistryComponent(
+    const userver::components::ComponentConfig& config,
+    const userver::components::ComponentContext& context
+)
+    : LoggableComponentBase(config, context) {
     if (config["stand-alone"].As<bool>()) {
-       registry_ = std::make_unique<UserRegistry>();
+        registry_ = std::make_unique<UserRegistry>();
     } else {
-
     }
 }
-
 
 userver::yaml_config::Schema RegistryComponent::GetStaticConfigSchema() {
     return userver::yaml_config::MergeSchemas<userver::components::ComponentBase>(R"(
@@ -28,7 +28,5 @@ properties:
 )");
 }
 
-UserRegistry& RegistryComponent::GetRegistry() const {
-    return *registry_;
-}
-}
+UserRegistry& RegistryComponent::GetRegistry() const { return *registry_; }
+}  // namespace bifrost::app::registry

@@ -1,10 +1,10 @@
 #include "socket_manager.hpp"
 
-#include <userver/server/handlers/server_monitor.hpp>
 #include <userver/clients/dns/component.hpp>
 #include <userver/components/component.hpp>
-#include <userver/utils/statistics/metric_tag.hpp>
 #include <userver/components/statistics_storage.hpp>
+#include <userver/server/handlers/server_monitor.hpp>
+#include <userver/utils/statistics/metric_tag.hpp>
 #include <userver/utils/statistics/metrics_storage.hpp>
 
 #include "utils/conversion/message_conversion.hpp"
@@ -33,7 +33,7 @@ void DoSend(userver::engine::io::Socket& sock, std::string login, app::Queue::Co
 }
 
 void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& chat, utils::Stats& stats) {
-    std::array<char, 1024> buf; // NOLINT(cppcoreguidelines-pro-type-member-init)
+    std::array<char, 1024> buf;  // NOLINT(cppcoreguidelines-pro-type-member-init)
     std::stringstream data;
 
     while (!userver::engine::current_task::ShouldCancel()) {
@@ -52,7 +52,7 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
 
         data << std::string{buf.data(), read_bytes};
 
-        if (std::string_view(buf.data(), read_bytes).find("\r\n\r\n") == std::string::npos) { //FIXME Протестировать
+        if (std::string_view(buf.data(), read_bytes).find("\r\n\r\n") == std::string::npos) {  // FIXME Протестировать
             continue;
         }
 
@@ -74,7 +74,7 @@ void DoRecv(userver::engine::io::Socket& sock, std::string login, app::Chat& cha
 }
 
 std::pair<std::string, std::string> RecieveAuthData(userver::engine::io::Socket& sock) {
-    std::array<char, 1024> buf; // NOLINT(cppcoreguidelines-pro-type-member-init)
+    std::array<char, 1024> buf;  // NOLINT(cppcoreguidelines-pro-type-member-init)
 
     LOG_DEBUG() << "RecieveAuthData(): Trying to read from socket";
 
@@ -89,44 +89,45 @@ std::pair<std::string, std::string> RecieveAuthData(userver::engine::io::Socket&
         LOG_DEBUG() << "RecieveAuthData(): Successfully read from socket, auth data: " << buf.data();
 
         auto [recipient, token] = utils::ParseAuthData(buf.data());
-        LOG_DEBUG() << "RecieveAuthData(): Parse Auth Data. Result{Recipient: " << recipient << "; Token: " << token <<"}";
+        LOG_DEBUG() << "RecieveAuthData(): Parse Auth Data. Result{Recipient: " << recipient << "; Token: " << token
+                    << "}";
 
         return {recipient, token};
     }
 
     return {};
 }
-}
+}  // namespace
 
-SocketManager::SocketManager(const userver::components::ComponentConfig& config,
-                             const userver::components::ComponentContext& context)
+SocketManager::SocketManager(
+    const userver::components::ComponentConfig& config,
+    const userver::components::ComponentContext& context
+)
     : TcpAcceptorBase(config, context),
       chat_(context.FindComponent<app::Application>().GetApp()),
-      stats_(context.FindComponent<userver::components::StatisticsStorage>().GetMetricsStorage()->GetMetric(kSocketManagerTag)) {
-}
+      stats_(context.FindComponent<userver::components::StatisticsStorage>().GetMetricsStorage()->GetMetric(
+          kSocketManagerTag
+      )) {}
 
 void SocketManager::ProcessSocket(userver::engine::io::Socket&& sock) {
     const auto sock_num = ++stats_.opened_sockets;
     LOG_DEBUG() << "New socket: " << stats_.opened_sockets;
 
-    userver::utils::FastScopeGuard guard{
-        [this, sock_num]() noexcept {
-            LOG_DEBUG() << "Close socket: " << sock_num;
-            ++stats_.closed_sockets;
-        }
-    };
+    userver::utils::FastScopeGuard guard{[this, sock_num]() noexcept {
+        LOG_DEBUG() << "Close socket: " << sock_num;
+        ++stats_.closed_sockets;
+    }};
 
     userver::tracing::Span span{fmt::format("sock_{}", sock_num)};
     span.AddTag("fd", std::to_string(sock.Fd()));
 
     auto [login, token] = RecieveAuthData(sock);
-    LOG_INFO() << "ProcessSocket(): Get Auth Data{" <<"Login: " << login << "; Token: " << token << "}";
+    LOG_INFO() << "ProcessSocket(): Get Auth Data{" << "Login: " << login << "; Token: " << token << "}";
 
     if (login.empty() || token.empty() || !chat_.Verify(login, token)) {
         LOG_WARNING() << "ProcessSocket(): Token or Login is empty, or wrong token";
         return;
     }
-
 
     auto queue = chat_.Register(login);
 
@@ -134,8 +135,8 @@ void SocketManager::ProcessSocket(userver::engine::io::Socket&& sock) {
         LOG_WARNING() << "ProcessSocket(): User with this token already has an active session";
         return;
     }
-//TODO нужно чтобы, когда появлялся еще один человек, который ввел правльный пароль и появился новый токен, старый инвалидировался, а человека выкидывали
-
+    // TODO нужно чтобы, когда появлялся еще один человек, который ввел правльный пароль и появился новый токен, старый
+    // инвалидировался, а человека выкидывали
 
     auto send_task = userver::utils::Async("send", DoSend, std::ref(sock), login, queue->GetConsumer());
     LOG_DEBUG() << "ProcessSocket(): Chat is ready, start DoRecv";
@@ -146,4 +147,4 @@ void SocketManager::ProcessSocket(userver::engine::io::Socket&& sock) {
     send_task.RequestCancel();
 }
 
-}
+}  // namespace bifrost::handlers::chat

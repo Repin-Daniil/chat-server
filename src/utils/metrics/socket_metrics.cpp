@@ -12,4 +12,4 @@ void ResetMetric(Stats& stats) {
     stats.closed_sockets = 0;
     stats.bytes_read = 0;
 }
-}
+}  // namespace bifrost::utils

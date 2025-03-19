@@ -36,7 +36,5 @@ std::pair<std::string, std::string> ParseMessage(std::string text) {
     return {login, message_content};
 }
 
-std::string SerializeMessage(app::Message msg) {
-    return msg.sender.login + "@" + msg.text + "\r\n\r\n";
-}
-}
+std::string SerializeMessage(app::Message msg) { return msg.sender.login + "@" + msg.text + "\r\n\r\n"; }
+}  // namespace bifrost::utils

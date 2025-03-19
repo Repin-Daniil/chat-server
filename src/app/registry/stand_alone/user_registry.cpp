@@ -6,12 +6,13 @@ namespace bifrost::app::registry {
 std::shared_ptr<Queue> UserRegistry::AddReceiver(const Login& new_recipient) {
     auto queue = Queue::Create();
 
-    auto [receiver, is_inserted] = login_to_receiver_.Insert(new_recipient, std::make_shared<SingleReceiver>(queue, new_recipient));
+    auto [receiver, is_inserted] =
+        login_to_receiver_.Insert(new_recipient, std::make_shared<SingleReceiver>(queue, new_recipient));
 
     if (!is_inserted) {
-        if(!receiver->GetQueue()->NoMoreConsumers()) {
-         LOG_WARNING() << "Receiver with id " << new_recipient << " already exists";
-         return {};
+        if (!receiver->GetQueue()->NoMoreConsumers()) {
+            LOG_WARNING() << "Receiver with id " << new_recipient << " already exists";
+            return {};
         }
 
         LOG_INFO() << "Get queue of user with id " << new_recipient << " from registry";
@@ -35,8 +36,6 @@ bool UserRegistry::Send(const Login& recipient, Message message) {
     return receiver->Send(std::move(message));
 }
 
-std::size_t UserRegistry::GetApproxRegistrySize() const {
-    return login_to_receiver_.SizeApprox();
-}
+std::size_t UserRegistry::GetApproxRegistrySize() const { return login_to_receiver_.SizeApprox(); }
 
-}
+}  // namespace bifrost::app::registry

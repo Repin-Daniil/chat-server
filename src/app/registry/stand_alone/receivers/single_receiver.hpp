@@ -15,4 +15,4 @@ private:
     std::shared_ptr<Queue> queue_;
     Queue::MultiProducer producer_;
 };
-}
+}  // namespace bifrost::app::registry

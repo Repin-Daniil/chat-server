@@ -3,7 +3,6 @@
 #include "userver/storages/postgres/postgres_fwd.hpp"
 #include "utils/token/token.hpp"
 
-
 namespace bifrost::app::auth {
 
 using Token = std::string;
@@ -18,10 +17,11 @@ public:
 
 private:
     userver::rcu::RcuMap<Token, std::string> token_map_{};
-    //TODO RcuMap<Login, time> expiration_map, чтобы следить чтобу одному опльзователю соотвт один токен, заодно инвалидацию проводить так
+    // TODO RcuMap<Login, time> expiration_map, чтобы следить чтобу одному опльзователю соотвт один токен, заодно
+    // инвалидацию проводить так
     userver::storages::postgres::ClusterPtr pg_cluster_;
     utils::TokenGenerator generator_;
 
     Token IssueToken(std::string_view login);
 };
-}
+}  // namespace bifrost::app::auth

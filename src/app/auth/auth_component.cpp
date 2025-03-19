@@ -5,19 +5,20 @@
 #include "userver/storages/postgres/component.hpp"
 
 namespace bifrost::app::auth {
-AuthComponent::AuthComponent(const userver::components::ComponentConfig& config,
-                             const userver::components::ComponentContext& context) : LoggableComponentBase(config,
-    context) {
+AuthComponent::AuthComponent(
+    const userver::components::ComponentConfig& config,
+    const userver::components::ComponentContext& context
+)
+    : LoggableComponentBase(config, context) {
     if (config["stand-alone"].As<bool>()) {
         auth_manager_ = std::make_unique<AuthManager>(
-            context.FindComponent<userver::components::Postgres>("bifrost-database").GetCluster());
+            context.FindComponent<userver::components::Postgres>("bifrost-database").GetCluster()
+        );
     } else {
     }
 }
 
-AuthManager& AuthComponent::GetAuthManager() const {
-    return *auth_manager_;
-}
+AuthManager& AuthComponent::GetAuthManager() const { return *auth_manager_; }
 
 userver::yaml_config::Schema AuthComponent::GetStaticConfigSchema() {
     return userver::yaml_config::MergeSchemas<userver::components::ComponentBase>(R"(
@@ -30,4 +31,4 @@ properties:
         description: stand-alone or replica set
 )");
 }
-}
+}  // namespace bifrost::app::auth

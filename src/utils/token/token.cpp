@@ -12,4 +12,4 @@ std::string TokenGenerator::GenerateNewToken() {
 
     return ss.str();
 }
-}
+}  // namespace bifrost::utils

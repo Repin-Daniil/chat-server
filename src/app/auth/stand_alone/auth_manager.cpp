@@ -1,32 +1,28 @@
 #include "auth_manager.hpp"
 
+#include "db/sql.hpp"
 #include "userver/storages/postgres/cluster.hpp"
 #include "userver/storages/postgres/cluster_types.hpp"
-#include "db/sql.hpp"
 
 namespace bifrost::app::auth {
-AuthManager::AuthManager(userver::storages::postgres::ClusterPtr pg_cluster) : pg_cluster_(std::move(pg_cluster)) {
-}
+AuthManager::AuthManager(userver::storages::postgres::ClusterPtr pg_cluster) : pg_cluster_(std::move(pg_cluster)) {}
 
 std::pair<Token, bool> AuthManager::AuthenticateUser(std::string_view login, std::string_view password) {
     bool is_new_user = false;
 
     try {
-        is_new_user = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kSlave,
-                                           sql::kFindUser,
-                                           login).IsEmpty();
+        is_new_user =
+            pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kSlave, sql::kFindUser, login).IsEmpty();
 
         if (is_new_user) {
-            pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kMaster,
-                                 sql::kInsertUser,
-                                 login,
-                                 password);
+            pg_cluster_->Execute(
+                userver::storages::postgres::ClusterHostType::kMaster, sql::kInsertUser, login, password
+            );
             LOG_INFO() << "Register new user " << login;
         } else {
-            auto check_pwd_result = pg_cluster_->Execute(userver::storages::postgres::ClusterHostType::kSlave,
-                                                         sql::kCheckPassword,
-                                                         login,
-                                                         password);
+            auto check_pwd_result = pg_cluster_->Execute(
+                userver::storages::postgres::ClusterHostType::kSlave, sql::kCheckPassword, login, password
+            );
 
             if (check_pwd_result.IsEmpty()) {
                 LOG_DEBUG() << "User " << login << "entered wrong password";
@@ -49,18 +45,17 @@ bool AuthManager::VerifyToken(std::string_view login, const Token& token) {
     return ptr && (*ptr == login);
 }
 
-
 Token AuthManager::IssueToken(std::string_view login) {
     Token token;
 
-    //TODO Проверять если уже был выпущен токен и он не expired, то его аннулируем и удаляем и делаем новый
+    // TODO Проверять если уже был выпущен токен и он не expired, то его аннулируем и удаляем и делаем новый
 
     do {
         token = generator_.GenerateNewToken();
         auto [auth_data, is_inserted] = token_map_.TryEmplace(token, login.data());
-        token = (is_inserted ? token : ""); //FIXME проверить!
+        token = (is_inserted ? token : "");  // FIXME проверить!
     } while (token.empty());
 
     return token;
 }
-}
+}  // namespace bifrost::app::auth

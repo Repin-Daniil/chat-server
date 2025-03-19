@@ -13,4 +13,4 @@ struct Stats {
 void DumpMetric(userver::utils::statistics::Writer& writer, const Stats& stats);
 void ResetMetric(Stats& stats);
 
-}
+}  // namespace bifrost::utils
