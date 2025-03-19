@@ -5,5 +5,5 @@ SELECT 'Ivan', crypt('ivan_password', salt), salt
 FROM generated_salt;
 
 INSERT INTO chat.users (login, password, salt)
-SELECT 'Daniil', crypt('strong_password', salt), salt
+SELECT 'Alice', crypt('strong_password', salt), salt
 FROM generated_salt;
